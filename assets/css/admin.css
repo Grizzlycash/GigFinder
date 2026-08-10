@@ -1,0 +1,35 @@
+/* Admin panel — dark sidebar keeps it unmistakably separate from the musician-facing app. */
+
+.shell-admin .sidebar {
+  background: var(--admin-bg);
+  border-right-color: var(--admin-line);
+}
+.shell-admin .brand-name { color: var(--admin-ink); }
+.shell-admin .brand-mark { background: var(--brand); }
+.shell-admin .brand-sub { color: var(--admin-ink-2); font-size: var(--fs-xs); letter-spacing: .6px; font-weight: 700; }
+
+.shell-admin .nav-label { color: #6E8A7F; }
+.shell-admin .nav-item { color: var(--admin-ink-2); }
+.shell-admin .nav-item .icon { color: #6E8A7F; }
+.shell-admin .nav-item:hover { background: #1A312A; color: var(--admin-ink); }
+.shell-admin .nav-item.active { background: var(--brand); color: #fff; }
+.shell-admin .nav-item.active .icon { color: #fff; }
+
+.shell-admin .sidebar-foot { border-top-color: var(--admin-line); }
+.shell-admin .plan-card { background: #17302800; background-color: #17302A; border-color: var(--admin-line); color: var(--admin-ink-2); }
+.shell-admin .plan-card .muted { color: #6E8A7F; }
+
+.shell-admin .topbar { border-bottom-color: var(--line); }
+.admin-flag {
+  display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px;
+  border-radius: 11px; background: var(--admin-bg); color: #fff; font-size: var(--fs-xs); font-weight: 700;
+}
+
+.import-drop {
+  border: 1px dashed var(--line-strong); border-radius: var(--radius-lg);
+  background: var(--surface-2); padding: 26px; text-align: center;
+}
+.import-drop.over { border-color: var(--brand); background: var(--brand-tint); }
+
+.map-col-select { display: grid; grid-template-columns: 160px 1fr; gap: 8px 12px; align-items: center; }
+@media (max-width: 640px) { .map-col-select { grid-template-columns: 1fr; } }

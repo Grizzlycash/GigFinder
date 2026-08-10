@@ -1,0 +1,62 @@
+/* GigBook design system tokens.
+   Brand: #1D9E75 · Typography: Arial, two weights (400 / 700) · Flat UI, no gradients. */
+
+:root {
+  /* Brand */
+  --brand: #1D9E75;
+  --brand-dark: #17805E;
+  --brand-darker: #12634A;
+  --brand-tint: #E9F5F1;
+  --brand-tint-strong: #CFE9E0;
+
+  /* Ink */
+  --ink: #101614;
+  --ink-2: #38443F;
+  --ink-3: #6B7A74;
+  --ink-4: #9AA7A2;
+
+  /* Surfaces */
+  --bg: #F5F7F6;
+  --surface: #FFFFFF;
+  --surface-2: #FAFBFB;
+  --line: #E1E7E4;
+  --line-strong: #C9D3CF;
+
+  /* Admin (dark sidebar keeps the admin panel visually distinct) */
+  --admin-bg: #10201B;
+  --admin-bg-2: #16302700;
+  --admin-line: #1F3830;
+  --admin-ink: #E7F0EC;
+  --admin-ink-2: #9FB5AC;
+
+  /* Pipeline status colours */
+  --st-none: #6B7A74;
+  --st-sent: #2F6FE4;
+  --st-opened: #C97A05;
+  --st-replied: #7C4DBC;
+  --st-booked: #1D9E75;
+  --st-declined: #C0392B;
+
+  /* Feedback */
+  --danger: #C0392B;
+  --danger-tint: #FBEDEB;
+  --warn: #C97A05;
+  --warn-tint: #FDF3E4;
+  --info-tint: #ECF2FD;
+
+  /* Metrics */
+  --radius: 6px;
+  --radius-lg: 10px;
+  --sidebar-w: 232px;
+  --topbar-h: 60px;
+  --maxw: 1180px;
+
+  /* Type scale */
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 14px;
+  --fs-md: 16px;
+  --fs-lg: 20px;
+  --fs-xl: 26px;
+  --fs-2xl: 32px;
+}
