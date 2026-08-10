@@ -1,0 +1,224 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   GigFinder — gig poster meets tattoo flash sheet.
+   Dark "ink" ground, warm "flash paper" surfaces, bold condensed display type.
+   ========================================================================= */
+
+@font-face {
+  font-family: "Anton";
+  src: url("./assets/fonts/anton-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("./assets/fonts/inter-var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  /* Ink — the dark ground */
+  --color-ink: #12151c;
+  --color-ink-raised: #1a1e27;
+  --color-ink-hover: #232833;
+  --color-ink-line: #2c323f;
+  --color-ink-line-strong: #3d4553;
+
+  /* Flash paper — content surfaces */
+  --color-paper: #f6f1e3;
+  --color-paper-shade: #ece5d3;
+  --color-paper-line: #d8cdb3;
+  --color-paper-ink: #1a1712;
+  --color-paper-muted: #6a6252;
+
+  /* Flash inks */
+  --color-flash-red: #b23a2e;
+  --color-flash-red-deep: #8e2c22;
+  --color-flash-green: #3c6e52;
+  --color-flash-green-deep: #2d5540;
+
+  /* Type on dark */
+  --color-bone: #f1ede1;
+  --color-bone-muted: #9b9686;
+
+  /* Stamp inks — one per contact status */
+  --color-stamp-none: #6e6a5e;
+  --color-stamp-emailed: #a4762b;
+  --color-stamp-opened: #2f5d6b;
+  --color-stamp-replied: #b23a2e;
+  --color-stamp-booked: #3c6e52;
+  --color-stamp-declined: #4a4a4a;
+
+  --font-display: "Anton", "Arial Narrow", "Haettenschweiler", "Impact", sans-serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-stub: 3px;
+}
+
+/* shadcn/ui token contract, mapped onto the flash palette.
+   Cards and popovers are paper; the app ground is ink. */
+:root {
+  --radius: 3px;
+
+  --background: var(--color-ink);
+  --foreground: var(--color-bone);
+
+  --card: var(--color-paper);
+  --card-foreground: var(--color-paper-ink);
+  --popover: var(--color-paper);
+  --popover-foreground: var(--color-paper-ink);
+
+  --primary: var(--color-flash-red);
+  --primary-foreground: #fbf7ec;
+  --secondary: var(--color-ink-raised);
+  --secondary-foreground: var(--color-bone);
+
+  --muted: var(--color-ink-raised);
+  --muted-foreground: var(--color-bone-muted);
+  --accent: var(--color-ink-hover);
+  --accent-foreground: var(--color-bone);
+
+  --destructive: #a8382b;
+  --destructive-foreground: #fbf7ec;
+
+  --border: var(--color-ink-line);
+  --input: var(--color-ink-line-strong);
+  --ring: var(--color-flash-red);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Faint paper grain over the ink ground — poster stock, not flat black. */
+    background-image:
+      radial-gradient(circle at 15% 12%, rgba(178, 58, 46, 0.05), transparent 42%),
+      radial-gradient(circle at 85% 78%, rgba(60, 110, 82, 0.05), transparent 45%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, .display {
+    @apply font-display tracking-wide uppercase;
+    font-weight: 400; /* Anton has one weight; never synthesise bold */
+  }
+
+  /* Visible keyboard focus everywhere — required by the brief. */
+  :focus-visible {
+    outline: 2px solid var(--color-flash-red);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-flash-red);
+    color: #fbf7ec;
+  }
+
+  /* Dark scrollbars so they don't tear holes in the ink ground. */
+  * {
+    scrollbar-color: var(--color-ink-line-strong) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+@layer components {
+  /* ---- Ticket-stub card: perforated left edge, paper stock ---- */
+  .stub {
+    @apply relative bg-card text-card-foreground border border-paper-line;
+    border-radius: var(--radius-stub);
+    /* Notches punched out of the left edge, like a torn ticket. */
+    -webkit-mask-image: radial-gradient(circle 5px at 0 25%, transparent 98%, black 100%),
+      radial-gradient(circle 5px at 0 75%, transparent 98%, black 100%);
+    -webkit-mask-composite: source-in;
+    mask-image: radial-gradient(circle 5px at 0 25%, transparent 98%, black 100%),
+      radial-gradient(circle 5px at 0 75%, transparent 98%, black 100%);
+    mask-composite: intersect;
+  }
+
+  .stub-perf {
+    @apply absolute inset-y-0 left-0 w-px;
+    background-image: linear-gradient(
+      to bottom,
+      var(--color-paper-line) 0 6px,
+      transparent 6px 12px
+    );
+  }
+
+  /* ---- Rubber stamp: the signature status element ---- */
+  .stamp {
+    @apply inline-flex items-center gap-1 border-2 px-2 py-0.5 font-display uppercase;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    line-height: 1.35;
+    border-radius: 2px;
+    transform: rotate(var(--stamp-tilt, -3deg));
+    /* Uneven ink coverage — a stamp never prints perfectly flat. */
+    opacity: 0.94;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 18%, transparent);
+  }
+
+  .stamp-lg {
+    font-size: 0.95rem;
+    @apply px-3 py-1 border-[3px];
+    letter-spacing: 0.18em;
+  }
+
+  /* ---- Hairline rule used on paper panels ---- */
+  .rule-paper {
+    @apply border-paper-line;
+  }
+
+  /* ---- Section label: letterspaced condensed caps ---- */
+  .eyebrow {
+    @apply font-display uppercase tracking-[0.16em] text-[0.7rem];
+  }
+}
+
+/* Purposeful motion only — honour the OS setting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .stamp {
+    transform: none;
+  }
+}

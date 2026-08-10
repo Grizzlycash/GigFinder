@@ -1,8 +1,10 @@
-# GigBook — product specification (v2.0, condensed)
+# GigFinder — product specification (v2.0, condensed)
 
 Reference version of the v2.0 spec, kept next to the implementation so the two stay honest.
-The Word document remains the formal artifact; this file records what the prototype actually
-builds.
+The Word document remains the formal artifact; this file records what the app actually builds.
+
+**Visual design is governed by `design-brief.md`**, not this document — gig poster meets
+tattoo flash sheet, dark ink ground with flash-paper surfaces. This spec covers behaviour.
 
 ## 1. Product
 
@@ -13,7 +15,7 @@ Three jobs, in order of use:
 2. **Send an EPK** to the booking contact without rewriting the pitch each time.
 3. **Track the pipeline** so nothing is dropped between "sent" and "booked".
 
-The venue database is shared across all subscribers and maintained by GigBook staff, seeded
+The venue database is shared across all subscribers and maintained by GigFinder staff, seeded
 from a proprietary spreadsheet. Subscribers can suggest additions, which enter a review queue.
 
 ## 2. Information architecture
@@ -28,8 +30,9 @@ Plan & billing and sign-out live in the account block at the foot of the sidebar
 Venues and Map are **distinct navigation items**. A combined list/map view compromised both:
 the list wants density and filters, the map wants space and a single selection.
 
-The admin panel is a separate chrome with a **lighter steel sidebar and an amber rail**, so it
-is never mistaken for the artist-facing app.
+The admin panel keeps the same chrome but swaps the accent from flash red to the ochre
+"emailed" ink and stamps ADMIN under the wordmark, so it is never mistaken for the
+artist-facing app.
 
 ## 3. Screens
 
@@ -110,7 +113,7 @@ never rewrite history. Re-contacting a venue warns first. Hitting the Basic send
 the form with an upgrade prompt.
 
 ### 3.9 Outreach tracker
-Five-stage pipeline: **Sent → Opened → Replied → Booked / Declined**. Two views over the same
+Five-stage pipeline: **Emailed → Opened → Replied → Booked / Passed**. Two views over the same
 data — a drag-and-drop board and a table with inline stage selects. Search plus filters for
 "awaiting reply" and "follow-ups due". Opening a record shows the exact email sent, stage,
 follow-up date (Pro), notes and history. Pro adds a four-tile analytics strip and CSV export.
@@ -167,13 +170,11 @@ whether to surface them there.
 
 ## 6. Design system
 
-Dark theme in blue and grey. Cool slate surfaces (`#0D131E` frame, `#151C2A` cards, `#1A2231`
-sidebar), a `#2F6BD8` primary action, and `#7FB0FF` for links and active navigation. Arial,
-two weights only (400/700). Flat UI — no gradients, hairline borders rather than shadows.
+See `design-brief.md` — it is the source of truth. In short: ink ground `#12151C`, flash-paper
+surfaces `#F6F1E3`, flash red `#B23A2E` for primary actions, flash green `#3C6E52` for success.
+Anton for display type, Inter for body. Contact status prints as a **stamped ink badge**, not a
+coloured pill, in one ink per status: grey not contacted, ochre emailed, blue opened, red
+replied, green booked, dead grey passed.
 
-Pipeline colours are fixed across every surface (board, venue list, map): sent amber, opened
-cyan, replied violet, booked green, declined red. Venue initials tiles hash the venue name to
-one of six muted swatches so a venue keeps its colour everywhere.
-
-The admin panel is set apart by contrast direction: where the artist app is dark slate, admin
-uses a lighter steel sidebar with an amber rail.
+Built with Tailwind + shadcn/ui components (`src/components/ui/`) for consistent spacing,
+focus states and keyboard behaviour.

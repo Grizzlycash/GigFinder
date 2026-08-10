@@ -1,11 +1,7 @@
-# GigBook
+# GigFinder
 
-Venue outreach and live-show booking for independent musicians. Browse a curated venue
-database, send Electronic Press Kits to booking contacts, and track the outreach pipeline.
-
-This repository is a **working reference implementation of the v2.0 product spec** — every
-screen and flow in the spec is clickable here, so decisions can be checked against real
-interaction before they are rebuilt in Bubble.io.
+Venue discovery, booking emails and outreach tracking for gigging musicians — built around a
+database of Melbourne live music rooms.
 
 **Picking this up after a break?** `docs/handover.md` has the current state, the decisions
 already made, and the open questions.
@@ -13,134 +9,130 @@ already made, and the open questions.
 ## Run it
 
 ```bash
-npm start          # http://localhost:4173
-npm test           # end-to-end browser suite (needs Playwright)
+npm install
+npm run dev      # http://localhost:5173
+npm test         # builds, then drives the whole app in Chromium
 ```
 
-No build step and no dependencies for the app itself. `server.js` is a ~40-line static file
-server; the app is plain ES modules, so any static host works. A server *is* required —
-browsers block ES module imports over `file://`.
+React + Vite + Tailwind v4 + shadcn/ui. `npm test` builds the production bundle, serves it,
+and walks 21 steps — signup through onboarding, venue filtering, map pins, both tier states
+of the EPK generator, a real send, the tracker, the admin CSV import — failing on any console
+or page error. It also asserts there's a visible keyboard focus ring and no horizontal
+overflow on mobile. Screenshots land in `test/screenshots/` (gitignored). Playwright is
+needed for the test only: `npm i -D playwright && npx playwright install chromium`.
 
-`npm test` drives the whole product in Chromium — signup through onboarding, venue
-filtering, map pins, both tier states of the EPK generator, a real send, the tracker, the
-admin CSV import — and fails on any console or page error. It starts and stops its own
-server and writes screenshots to `test/screenshots/`. Install Playwright first:
-`npm i -D playwright && npx playwright install chromium`.
+## Design
 
-## What's in it
+The look is governed by **`docs/design-brief.md`** — gig poster meets tattoo flash sheet. The
+short version:
+
+| | |
+| --- | --- |
+| Ink (ground) | `#12151C` |
+| Flash paper (surfaces) | `#F6F1E3` |
+| Flash red (primary) | `#B23A2E` |
+| Flash green (success) | `#3C6E52` |
+| Display type | Anton — headings and venue names only |
+| Body type | Inter — lists, forms, data |
+
+Everything lives in `src/index.css`: the palette as Tailwind v4 `@theme` tokens, plus the
+shadcn variable contract (`--background`, `--card`, `--primary`…) mapped onto it, so
+components follow the palette automatically. Fonts are self-hosted in `src/assets/fonts` —
+no CDN, works offline.
+
+Two components carry the aesthetic:
+
+- **`Stamp`** — the signature element. Contact status printed as a rubber stamp, one ink per
+  status, each tilted a few degrees by a hash of the venue id so it's consistent but never
+  mechanical. "Not contacted" prints faint so contacted rooms pop.
+- **`VenueCard`** — a venue as a ticket stub: perforated left edge, paper stock, name in
+  poster type, dashed rule above the genre/pay footer.
+
+## Screens
 
 | Screen | Route | Notes |
 | --- | --- | --- |
-| Landing / sign in | `#/` | Split hero + create-account form |
-| Onboarding | `#/onboarding` | Four steps: profile → links & photo → EPK bio → plan |
-| Dashboard | `#/dashboard` | Greeting, metrics, recent outreach, follow-ups, coverage |
-| Venues | `#/venues`, `#/venues/:id` | Chip filter bar, venue list column, detail pane |
-| Map | `#/map` | Separate nav item from Venues; pins coloured by pipeline stage |
-| EPK generator | `#/epk`, `#/epk/:id` | Section rail: bio, photos, music, socials, tech rider |
-| Send EPK | `#/send` | Linear six-step flow, body auto-filled from the EPK short bio |
-| Outreach tracker | `#/outreach` | Drag-and-drop board or table, notes, history |
-| Saved lists | `#/lists` | Pro — route a run of dates |
-| Plan & billing | `#/pricing` | Basic / Pro, monthly / annual |
-| Settings | `#/settings` | Profile, outreach defaults, data controls |
-| Admin panel | `#/admin/*` | Steel sidebar — venue DB, spreadsheet import, submissions, users |
+| Landing / sign in | `/` | Show-bill hero + paper form card |
+| Onboarding | `/onboarding` | Four steps: act → links → bio → plan |
+| Dashboard | `/dashboard` | Tiles, recent outreach, follow-ups, coverage |
+| Venues | `/venues`, `/venues/:id` | Flash-sheet card list + detail panel |
+| Map | `/map` | Clustered pins in stamp inks, nearby rooms |
+| EPK generator | `/epk`, `/epk/:id` | Section rail: bio, photos, music, socials, rider |
+| Booking email | `/send` | Linear six-step draft, three tone presets |
+| Outreach (CRM) | `/outreach` | Stamped table, or a drag-and-drop board |
+| Saved lists | `/lists` | Pro — route a run of dates |
+| Plan & billing | `/pricing` | Basic / Pro, monthly or annual |
+| Settings | `/settings` | Profile, outreach defaults, data |
+| Admin | `/admin/*` | Venue DB, CSV import, submissions, users |
 
-### Four design decisions the build follows
+## Layout
 
-- **The send flow is linear, top to bottom.** One column, six numbered steps, no tabs or
-  modals. The email body is generated from the selected EPK's short bio on load, so every
-  pitch reads consistently and the artist only edits when they want to.
-- **Map and Venues are separate nav items.** A combined view made both jobs worse.
-- **Venues is a three-pane browser** — filter chips across the top, a list column, and a
-  detail pane — so filtering and reading a venue never cost a page change.
-- **The admin panel is visually distinct.** It originally did this with a dark sidebar; now
-  that the whole app is dark, admin uses a *lighter* steel sidebar with an amber rail. Same
-  job: you can never mistake it for the artist-facing app.
+```
+src/
+  index.css          palette, fonts, .stamp and .stub component classes
+  App.jsx            routes + auth guards
+  components/
+    AppShell.jsx     sidebar, top bar, account dialog
+    Stamp.jsx        the signature status element
+    VenueCard.jsx    the ticket stub
+    ui/              shadcn/ui components (Radix + CVA)
+  routes/            one file per screen
+  store/store.js     all state, persistence and plan limits
+  data/venues.js     Melbourne seed database
+  lib/               cn(), formatting helpers
+test/smoke.mjs       end-to-end browser suite
+docs/design-brief.md the visual brief — source of truth for the look
+docs/handover.md     state, decisions, open questions
+docs/product-spec.md behaviour spec
+docs/mockups/        earlier HTML mockups (superseded by the brief)
+```
 
 ## Subscription tiers
 
 |  | Basic | Pro |
 | --- | --- | --- |
 | Monthly | $9.99 | $19.99 |
-| Annual (20% off) | $7.99/mo — $95.88/yr | $15.99/mo — $191.88/yr |
+| Annual (20% off) | $7.99/mo | $15.99/mo |
 | Venue database + map | ✓ | ✓ |
-| EPK sends | 15 / month | Unlimited |
-| Outreach tracker | ✓ | ✓ |
+| Booking emails | 15 / month | Unlimited |
+| Outreach tracking | ✓ | ✓ |
 | Upload your own EPK | ✓ | ✓ |
 | Add private venues | ✓ | ✓ |
-| EPK generator | Bio only | Full — photos, music, socials, rider |
-| EPKs | 1 | Unlimited |
-| Follow-up reminders | — | ✓ |
-| Saved venue lists | — | ✓ |
-| CSV export | — | ✓ |
-| Outreach analytics | — | ✓ |
+| EPK generator | Bio only | Full |
+| Follow-up reminders, saved lists, CSV export, analytics | — | ✓ |
 
-Basic keeps the **Biography** section of the generator even though the generator is a Pro
-feature: the outreach email is written from its short bio, so locking it would break the
-core flow for paying Basic users. Everything else in the generator is Pro, and Basic can
-attach a press kit built elsewhere instead.
-
-Gating is enforced in `assets/js/store.js` (`plan()`, `can()`, `sendsRemaining()`), so the
-tier boundary lives in one place. Switching plans on `#/pricing` swaps the feature set
-immediately — useful for demoing both tiers.
-
-## Layout
-
-```
-index.html
-server.js                 static dev server (no dependencies)
-assets/css/               tokens → base → components → layout → admin
-assets/js/
-  app.js                  shell, routing table, sidebar/topbar chrome
-  router.js               hash router (#/venues/:id)
-  store.js                state, persistence, plan limits, all mutations
-  seed.js                 seed venue database
-  ui.js                   escaping, icons, formatting, toasts, modals
-  views/                  one module per screen: { title, render(ctx), mount(el, ctx) }
-test/smoke.mjs            end-to-end browser suite (npm test)
-docs/handover.md          state, decisions and open questions — read this first
-docs/product-spec.md      condensed v2.0 spec
-docs/mockups/             the five source HTML mockups the UI was built against
-```
-
-Each view exports `render(ctx)` returning an HTML string plus an optional `mount(root, ctx)`
-for event wiring. `ctx` carries `params`, `query`, `navigate` and `rerender`.
+Basic keeps the generator's **Biography** section even though the generator is a Pro feature:
+the booking email is written from its short bio, so locking it would break the core flow for
+a paying user. Limits live in one place (`plan()`, `can()`, `sendsRemaining()` in
+`src/store/store.js`).
 
 ## Data
 
-State lives in `localStorage` under `gigbook:v1` — nothing leaves the browser. `store.js` is
+State is in `localStorage` under `gigfinder:v1` — nothing leaves the browser. `store.js` is
 the only module that touches persistence, so swapping it for API calls is the single change
 needed to move to a real backend.
 
-**The seeded venues are fictional.** Names, booking contacts and addresses are invented and
-all email addresses use the reserved `example.com` domain. Alex's proprietary spreadsheet
-replaces them via **Admin → Import Spreadsheet**, which reads a CSV, guesses the column
-mapping from the headers, previews the rows, and de-duplicates on *name + city* so re-imports
-update rather than duplicate.
+**The seeded venues are fictional.** Names, contacts and addresses are invented and every
+email uses the reserved `example.com` domain. The real 222-venue spreadsheet replaces them
+via **Admin → Import spreadsheet**, which reads a CSV, guesses the column mapping from the
+headers, previews the rows, and de-duplicates on *name + suburb* so re-imports update rather
+than duplicate.
 
-Sample pipeline data is available from Settings → Data, or the empty state of the tracker.
+## Deploying
 
-## Design system
-
-Dark theme, blue and grey. The full token set is in `assets/css/tokens.css` — change the
-palette there and the whole app follows.
-
-- **Surfaces**: cool slate greys, deepest at the app frame — `#0D131E` background,
-  `#151C2A` cards, `#1A2231` sidebar and inset areas
-- **Primary action**: `#2F6BD8` (white label, ~5:1 contrast); `#7FB0FF` for links and
-  active nav on dark surfaces
-- Arial, **two weights only** (400 and 700) — nothing uses 500/600
-- Flat UI: no gradients anywhere, hairline borders instead of shadows
-- **Pipeline colours** (dark-tuned, used identically on the board, venue list and map):
-  sent amber, opened cyan, replied violet, booked green, declined red
-- **Initials tiles** hash a venue's name to one of six muted swatches, so a venue keeps the
-  same colour everywhere it appears
+`.github/workflows/pages.yml` builds and publishes to GitHub Pages on push. Set **Settings →
+Pages → Source: GitHub Actions** once, and it deploys to
+`https://grizzlycash.github.io/GigFinder/`. The build uses `base: './'`, so it also works
+from any subpath or a plain static host.
 
 ## Known prototype boundaries
 
-- **Sending is simulated.** A send records the outreach and its exact email copy; it does not
-  hand off to an email provider. That integration is a Bubble-side concern.
-- **The map is drawn from scratch** as an SVG plot (equirectangular projection, pan/zoom,
-  co-located pins fanned apart) rather than a tile map, so the prototype works offline. In
-  Bubble this pane becomes the native map element; the pins, colours and side panel stay.
-- **Payments are not processed.** Choosing a plan switches the feature set only.
-- Auth is by email only, on-device, with no password — enough to demo multi-user and admin.
+- **Sending is simulated.** An outreach record with its own copy of the email is written; no
+  email provider is contacted.
+- **The draft is generated locally, not by an AI call.** Tone presets reshape the framing
+  around the artist's own bio; nothing is sent to a model. Wiring in a real generator means
+  replacing `composeBody()` in `src/routes/SendEpk.jsx`.
+- **The map is hand-drawn SVG**, not a tile map, so it works offline. It reads as a plot of
+  Victoria rather than a street map.
+- **No payments.** Choosing a plan switches the feature set only.
+- **Auth is email-only and on-device** — enough to demo multi-user and admin.
