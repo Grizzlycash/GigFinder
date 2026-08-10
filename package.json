@@ -5,7 +5,8 @@
   "description": "GigBook — venue outreach and live show booking for independent musicians. Interactive reference implementation of the v2.0 product spec.",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js 4173"
+    "dev": "node server.js 4173",
+    "test": "node test/smoke.mjs"
   },
   "engines": {
     "node": ">=18"

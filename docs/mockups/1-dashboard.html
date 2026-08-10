@@ -1,0 +1,256 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.app{display:flex;height:700px;font-family:var(--font-sans);background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;overflow:hidden;}
+.sidebar{width:200px;min-width:200px;border-right:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);display:flex;flex-direction:column;}
+.sb-logo{padding:18px 16px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px;}
+.sb-mark{width:24px;height:24px;border-radius:6px;background:#1D9E75;display:flex;align-items:center;justify-content:center;}
+.sb-mark svg{width:12px;height:12px;stroke:#E1F5EE;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.sb-name{font-size:14px;font-weight:500;color:var(--color-text-primary);}
+.sb-nav{padding:12px 8px;flex:1;}
+.sb-section{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-tertiary);padding:10px 8px 4px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;margin-bottom:1px;}
+.sb-item:hover{background:var(--color-background-primary);}
+.sb-item.active{background:var(--color-background-primary);color:var(--color-text-primary);font-weight:500;border:0.5px solid var(--color-border-tertiary);}
+.sb-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.sb-badge{margin-left:auto;background:#E1F5EE;color:#085041;font-size:10px;font-weight:500;padding:1px 6px;border-radius:20px;}
+.sb-user{padding:12px 12px;border-top:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px;}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#085041;flex-shrink:0;}
+.sb-uname{font-size:12px;font-weight:500;color:var(--color-text-primary);}
+.sb-plan{font-size:10px;color:#1D9E75;}
+.main{flex:1;overflow-y:auto;background:var(--color-background-tertiary);}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:14px 20px;display:flex;align-items:center;gap:12px;}
+.topbar-greeting{flex:1;}
+.topbar-greeting h2{font-size:16px;font-weight:500;color:var(--color-text-primary);}
+.topbar-greeting p{font-size:12px;color:var(--color-text-secondary);margin-top:1px;}
+.topbar-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:#1D9E75;color:#E1F5EE;}
+.topbar-btn svg{width:13px;height:13px;stroke:#E1F5EE;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.content{padding:20px;}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px;}
+.metric{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:14px;}
+.metric-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;}
+.metric-value{font-size:22px;font-weight:500;color:var(--color-text-primary);line-height:1;}
+.metric-sub{font-size:11px;color:var(--color-text-tertiary);margin-top:4px;}
+.metric-sub.up{color:#1D9E75;}
+.metric-sub.warn{color:#BA7517;}
+.two-col{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
+.panel{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;overflow:hidden;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.panel-title{font-size:13px;font-weight:500;color:var(--color-text-primary);}
+.panel-link{font-size:12px;color:#1D9E75;cursor:pointer;}
+.venue-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer;}
+.venue-row:last-child{border-bottom:none;}
+.venue-row:hover{background:var(--color-background-secondary);}
+.v-init{width:32px;height:32px;min-width:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;}
+.v-init.t{background:#E1F5EE;color:#085041;}
+.v-init.b{background:#E6F1FB;color:#0C447C;}
+.v-init.a{background:#FAEEDA;color:#633806;}
+.v-init.g{background:#EAF3DE;color:#27500A;}
+.v-name{flex:1;min-width:0;}
+.v-name p{font-size:13px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.v-name span{font-size:11px;color:var(--color-text-secondary);}
+.v-status{font-size:11px;padding:3px 8px;border-radius:20px;white-space:nowrap;}
+.st-none{background:var(--color-background-secondary);color:var(--color-text-secondary);}
+.st-sent{background:#FAEEDA;color:#633806;}
+.st-booked{background:#E1F5EE;color:#085041;}
+.st-fu{background:#EEEDFE;color:#3C3489;}
+.v-date{font-size:11px;color:var(--color-text-tertiary);margin-left:6px;white-space:nowrap;}
+.reminder-item{display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.reminder-item:last-child{border-bottom:none;}
+.r-dot{width:8px;height:8px;min-width:8px;border-radius:50%;margin-top:4px;}
+.r-dot.today{background:#D85A30;}
+.r-dot.week{background:#BA7517;}
+.r-dot.done{background:#1D9E75;}
+.r-text{font-size:12px;color:var(--color-text-primary);line-height:1.45;}
+.r-when{font-size:11px;color:var(--color-text-tertiary);margin-top:2px;}
+.usage-bar-wrap{padding:14px 16px;}
+.usage-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px;}
+.usage-label span:first-child{color:var(--color-text-secondary);}
+.usage-label span:last-child{font-weight:500;color:var(--color-text-primary);}
+.bar-track{height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;background:#1D9E75;}
+.bar-fill.warn{background:#EF9F27;}
+.epk-nudge{background:#EEEDFE;border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.epk-nudge-icon{width:36px;height:36px;min-width:36px;border-radius:8px;background:#CECBF6;display:flex;align-items:center;justify-content:center;}
+.epk-nudge-icon svg{width:16px;height:16px;stroke:#3C3489;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.epk-nudge-text p{font-size:13px;font-weight:500;color:#26215C;}
+.epk-nudge-text span{font-size:11px;color:#534AB7;}
+.epk-nudge-btn{margin-left:auto;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:500;background:#534AB7;color:#EEEDFE;border:none;cursor:pointer;white-space:nowrap;}
+</style>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-mark"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      <span class="sb-name">GigBook</span>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item active">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="sb-item" onclick="sendPrompt('Show me the venue browser screen ↗')">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Venues
+      </div>
+      <div class="sb-item" onclick="sendPrompt('Show me the outreach tracker screen ↗')">
+        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        Outreach
+        <span class="sb-badge">3</span>
+      </div>
+      <div class="sb-section">My profile</div>
+      <div class="sb-item" onclick="sendPrompt('Show me the EPK builder screen ↗')">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        My EPK
+      </div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41"/></svg>
+        Settings
+      </div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar">AM</div>
+      <div>
+        <div class="sb-uname">Alex Morgan</div>
+        <div class="sb-plan">Pro plan</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-greeting">
+        <h2>Good morning, Alex</h2>
+        <p>Tuesday 7 April · 3 follow-ups due this week</p>
+      </div>
+      <button class="topbar-btn" onclick="sendPrompt('Show me the send EPK flow ↗')">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Send EPK
+      </button>
+    </div>
+
+    <div class="content">
+
+      <div class="epk-nudge">
+        <div class="epk-nudge-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
+        <div class="epk-nudge-text">
+          <p>Your EPK isn't set up yet</p>
+          <span>Add your bio, photos and music links to start sending</span>
+        </div>
+        <button class="epk-nudge-btn" onclick="sendPrompt('Show me the EPK builder screen ↗')">Set up EPK</button>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">EPKs sent</div>
+          <div class="metric-value">11</div>
+          <div class="metric-sub up">+4 this month</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Sends remaining</div>
+          <div class="metric-value" style="color:#1D9E75;">∞</div>
+          <div class="metric-sub">Pro · unlimited</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Venues contacted</div>
+          <div class="metric-value">18</div>
+          <div class="metric-sub up">of 240 in database</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Shows booked</div>
+          <div class="metric-value">2</div>
+          <div class="metric-sub up">Bar Brosé, The Toff</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Recent outreach</span>
+            <span class="panel-link" onclick="sendPrompt('Show me the full outreach tracker ↗')">View all</span>
+          </div>
+          <div class="venue-row">
+            <div class="v-init t">TT</div>
+            <div class="v-name"><p>The Toff in Town</p><span>Melbourne CBD · Cap. 250</span></div>
+            <span class="v-status st-fu">Follow-up due</span>
+            <span class="v-date">Today</span>
+          </div>
+          <div class="venue-row">
+            <div class="v-init b">BB</div>
+            <div class="v-name"><p>Bar Brosé</p><span>Armadale · Cap. 80</span></div>
+            <span class="v-status st-booked">Booked</span>
+            <span class="v-date">2 Apr</span>
+          </div>
+          <div class="venue-row">
+            <div class="v-init a">PP</div>
+            <div class="v-name"><p>The Prince Bandroom</p><span>St Kilda · Cap. 800</span></div>
+            <span class="v-status st-sent">EPK sent</span>
+            <span class="v-date">1 Apr</span>
+          </div>
+          <div class="venue-row">
+            <div class="v-init g">NC</div>
+            <div class="v-name"><p>Night Cat</p><span>Fitzroy · Cap. 550</span></div>
+            <span class="v-status st-sent">EPK sent</span>
+            <span class="v-date">28 Mar</span>
+          </div>
+          <div class="venue-row">
+            <div class="v-init t">LH</div>
+            <div class="v-name"><p>The Leadbeater Hotel</p><span>Richmond · Cap. 120</span></div>
+            <span class="v-status st-none">Not contacted</span>
+            <span class="v-date">—</span>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Follow-up reminders</span>
+              <span class="panel-link">Manage</span>
+            </div>
+            <div class="reminder-item">
+              <div class="r-dot today"></div>
+              <div>
+                <div class="r-text">Follow up with The Toff in Town</div>
+                <div class="r-when">Today · EPK sent 26 Mar</div>
+              </div>
+            </div>
+            <div class="reminder-item">
+              <div class="r-dot week"></div>
+              <div>
+                <div class="r-text">Follow up with The Prince Bandroom</div>
+                <div class="r-when">Thu 10 Apr · EPK sent 1 Apr</div>
+              </div>
+            </div>
+            <div class="reminder-item">
+              <div class="r-dot week"></div>
+              <div>
+                <div class="r-text">Follow up with Night Cat</div>
+                <div class="r-when">Fri 11 Apr · EPK sent 28 Mar</div>
+              </div>
+            </div>
+            <div class="reminder-item">
+              <div class="r-dot done"></div>
+              <div>
+                <div class="r-text" style="color:var(--color-text-secondary);text-decoration:line-through;">Follow up with Bar Brosé</div>
+                <div class="r-when">Completed · Now booked</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <span class="panel-title">Database coverage</span>
+            </div>
+            <div class="usage-bar-wrap">
+              <div class="usage-label"><span>Venues contacted</span><span>18 / 240</span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:7.5%"></div></div>
+              <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px;">92.5% of venues not yet reached</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,404 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.app{display:flex;height:800px;font-family:var(--font-sans);background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;overflow:hidden;}
+.sidebar{width:200px;min-width:200px;border-right:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);display:flex;flex-direction:column;}
+.sb-logo{padding:18px 16px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px;}
+.sb-mark{width:24px;height:24px;border-radius:6px;background:#1D9E75;display:flex;align-items:center;justify-content:center;}
+.sb-mark svg{width:12px;height:12px;stroke:#E1F5EE;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.sb-name{font-size:14px;font-weight:500;color:var(--color-text-primary);}
+.sb-nav{padding:12px 8px;flex:1;}
+.sb-section{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-tertiary);padding:10px 8px 4px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;margin-bottom:1px;}
+.sb-item:hover{background:var(--color-background-primary);}
+.sb-item.active{background:var(--color-background-primary);color:var(--color-text-primary);font-weight:500;border:0.5px solid var(--color-border-tertiary);}
+.sb-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.sb-badge{margin-left:auto;background:#E1F5EE;color:#085041;font-size:10px;font-weight:500;padding:1px 6px;border-radius:20px;}
+.sb-user{padding:12px;border-top:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px;}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#085041;flex-shrink:0;}
+.sb-uname{font-size:12px;font-weight:500;color:var(--color-text-primary);}
+.sb-plan{font-size:10px;color:#1D9E75;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.tb-title{font-size:15px;font-weight:500;color:var(--color-text-primary);flex:1;}
+.search-wrap{display:flex;align-items:center;gap:7px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:0 10px;height:32px;width:200px;}
+.search-wrap svg{width:12px;height:12px;stroke:var(--color-text-tertiary);fill:none;stroke-width:2;flex-shrink:0;}
+.search-wrap input{border:none;background:transparent;font-size:12px;color:var(--color-text-primary);outline:none;width:100%;}
+.search-wrap input::placeholder{color:var(--color-text-tertiary);}
+.filter-bar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:8px 16px;display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap;}
+.chip{padding:3px 10px;border-radius:20px;border:0.5px solid var(--color-border-tertiary);font-size:12px;color:var(--color-text-secondary);cursor:pointer;background:transparent;}
+.chip.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);}
+.divider-v{width:0.5px;height:14px;background:var(--color-border-tertiary);margin:0 2px;flex-shrink:0;}
+.map-body{flex:1;display:flex;overflow:hidden;}
+.map-area{flex:1;position:relative;background:#e8ecef;overflow:hidden;}
+.map-canvas{width:100%;height:100%;}
+.map-overlay-tl{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:8px;}
+.map-overlay-tr{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:6px;}
+.map-overlay-br{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:4px;}
+.map-btn{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:7px 12px;font-size:12px;color:var(--color-text-primary);cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:500;}
+.map-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.zoom-btn{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--color-text-primary);font-weight:300;}
+.legend{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px 12px;}
+.legend-title{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-tertiary);margin-bottom:7px;}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--color-text-secondary);margin-bottom:4px;}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.panel{width:280px;min-width:280px;border-left:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);display:flex;flex-direction:column;overflow:hidden;}
+.panel-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;}
+.panel-empty svg{width:32px;height:32px;stroke:var(--color-text-tertiary);fill:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;margin-bottom:12px;}
+.panel-empty-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px;}
+.panel-empty-sub{font-size:12px;color:var(--color-text-secondary);line-height:1.5;}
+.panel-head{padding:14px 16px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.panel-venue-name{font-size:15px;font-weight:500;color:var(--color-text-primary);}
+.panel-venue-sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px;}
+.panel-tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.ptag{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary);}
+.panel-section{padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.ps-title{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-tertiary);margin-bottom:8px;}
+.ps-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;}
+.ps-label{color:var(--color-text-secondary);}
+.ps-val{color:var(--color-text-primary);font-weight:500;}
+.contact-block{display:flex;align-items:center;gap:9px;background:var(--color-background-secondary);border-radius:8px;padding:9px 11px;}
+.c-init{width:30px;height:30px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#0C447C;}
+.c-name{font-size:12px;font-weight:500;color:var(--color-text-primary);}
+.c-email{font-size:11px;color:#1D9E75;margin-top:1px;}
+.panel-actions{padding:12px 16px;display:flex;flex-direction:column;gap:7px;margin-top:auto;}
+.btn-pri{width:100%;padding:9px;border-radius:9px;font-size:13px;font-weight:500;background:#1D9E75;color:#E1F5EE;border:none;cursor:pointer;}
+.btn-sec{width:100%;padding:8px;border-radius:9px;font-size:13px;border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-secondary);cursor:pointer;}
+.nearby-list{padding:0;}
+.nearby-item{display:flex;align-items:center;gap:10px;padding:9px 16px;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer;}
+.nearby-item:hover{background:var(--color-background-secondary);}
+.nearby-init{width:28px;height:28px;min-width:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;}
+.ni-t{background:#E1F5EE;color:#085041;}
+.ni-b{background:#E6F1FB;color:#0C447C;}
+.ni-a{background:#FAEEDA;color:#633806;}
+.ni-g{background:#EAF3DE;color:#27500A;}
+.ni-p{background:#EEEDFE;color:#3C3489;}
+.ni-c{background:#FAECE7;color:#712B13;}
+.nearby-name{font-size:12px;font-weight:500;color:var(--color-text-primary);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nearby-dist{font-size:11px;color:var(--color-text-tertiary);flex-shrink:0;}
+.status-badge{font-size:10px;padding:2px 7px;border-radius:20px;}
+.sb-none{background:var(--color-background-secondary);color:var(--color-text-secondary);}
+.sb-sent{background:#FAEEDA;color:#633806;}
+.sb-booked{background:#E1F5EE;color:#085041;}
+.sb-fu{background:#EEEDFE;color:#3C3489;}
+</style>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-mark"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      <span class="sb-name">GigBook</span>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Venues</div>
+      <div class="sb-item active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Map</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Outreach<span class="sb-badge">3</span></div>
+      <div class="sb-section">My profile</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My EPK</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41"/></svg>Settings</div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar">AM</div>
+      <div><div class="sb-uname">Alex Morgan</div><div class="sb-plan">Pro plan</div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="tb-title">Map</span>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input placeholder="Search suburb or venue…" id="srch"/>
+      </div>
+      <button class="map-btn" style="border:0.5px solid var(--color-border-tertiary);">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+        My location
+      </button>
+    </div>
+
+    <div class="filter-bar">
+      <span style="font-size:11px;color:var(--color-text-tertiary);">Show:</span>
+      <button class="chip on" onclick="toggleChip(this)">All venues</button>
+      <button class="chip" onclick="toggleChip(this)">Not contacted</button>
+      <button class="chip" onclick="toggleChip(this)">EPK sent</button>
+      <button class="chip" onclick="toggleChip(this)">Booked</button>
+      <div class="divider-v"></div>
+      <span style="font-size:11px;color:var(--color-text-tertiary);">Genre:</span>
+      <button class="chip" onclick="toggleChip(this)">Rock</button>
+      <button class="chip" onclick="toggleChip(this)">Jazz</button>
+      <button class="chip" onclick="toggleChip(this)">Folk</button>
+      <div class="divider-v"></div>
+      <button class="chip" onclick="toggleChip(this)">My private venues</button>
+    </div>
+
+    <div class="map-body">
+      <div class="map-area">
+        <canvas class="map-canvas" id="mapCanvas"></canvas>
+
+        <div class="map-overlay-tl">
+          <div class="legend">
+            <div class="legend-title">Venue status</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1D9E75;"></div>Booked</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#534AB7;"></div>Follow-up due</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#BA7517;"></div>EPK sent</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#888780;"></div>Not contacted</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1D9E75;border:2px solid white;outline:1.5px solid #1D9E75;"></div>Private venue</div>
+          </div>
+        </div>
+
+        <div class="map-overlay-tr">
+          <button class="map-btn">
+            <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07M19.07 2.93a10 10 0 010 14.14"/></svg>
+            Nearby first
+          </button>
+          <button class="map-btn" style="font-size:11px;color:var(--color-text-secondary);">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            240 venues shown
+          </button>
+        </div>
+
+        <div class="map-overlay-br">
+          <div class="zoom-btn" onclick="zoomIn()">+</div>
+          <div class="zoom-btn" onclick="zoomOut()">&minus;</div>
+        </div>
+      </div>
+
+      <div class="panel" id="side-panel">
+        <div class="panel-empty">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <div class="panel-empty-title">Select a venue</div>
+          <div class="panel-empty-sub">Click any pin on the map to see venue details, contact info, and outreach history.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var venues = [
+  {id:0,init:'TT',cls:'ni-t',name:'The Toff in Town',suburb:'Melbourne CBD',cap:250,genre:['Rock','Indie'],pay:'Door deal',contact:'Sarah Liu',email:'bookings@thetoff.com.au',status:'fu',dist:'0.4 km',x:0.48,y:0.38},
+  {id:1,init:'BB',cls:'ni-b',name:'Bar Brosé',suburb:'Armadale',cap:80,genre:['Jazz','Acoustic'],pay:'Flat fee',contact:'Tom Briggs',email:'tom@barbrose.com.au',status:'booked',dist:'4.2 km',x:0.44,y:0.72},
+  {id:2,init:'PP',cls:'ni-a',name:'The Prince Bandroom',suburb:'St Kilda',cap:800,genre:['Rock','All genres'],pay:'Door deal',contact:'Jess Park',email:'bookings@theprince.com.au',status:'sent',dist:'3.8 km',x:0.38,y:0.78},
+  {id:3,init:'NC',cls:'ni-g',name:'Night Cat',suburb:'Fitzroy',cap:550,genre:['Latin','World'],pay:'Revenue share',contact:'Maria Conti',email:'gigs@nightcat.com.au',status:'sent',dist:'2.1 km',x:0.55,y:0.32},
+  {id:4,init:'LH',cls:'ni-p',name:'The Leadbeater Hotel',suburb:'Richmond',cap:120,genre:['Folk','Rock'],pay:'Door deal',contact:'Dave Chen',email:'dave@leadbeater.com.au',status:'none',dist:'2.9 km',x:0.62,y:0.55},
+  {id:5,init:'CB',cls:'ni-c',name:'Cherry Bar',suburb:'Melbourne CBD',cap:100,genre:['Rock','Punk'],pay:'Door deal',contact:'James Young',email:'james@cherrybar.com.au',status:'none',dist:'0.6 km',x:0.51,y:0.41},
+  {id:6,init:'WC',cls:'ni-t',name:'Workers Club',suburb:'Fitzroy',cap:300,genre:['Indie','Electronic'],pay:'Revenue share',contact:'Amy Wu',email:'bookings@theworkersclub.com.au',status:'none',dist:'1.9 km',x:0.57,y:0.27},
+  {id:7,init:'MB',cls:'ni-b',name:'The Milk Bar',suburb:'Collingwood',cap:60,genre:['Jazz','Folk'],pay:'Flat fee',contact:'Leon Rowe',email:'leon@themilkbar.com.au',status:'none',dist:'2.4 km',x:0.63,y:0.30,private:true},
+  {id:8,init:'HF',cls:'ni-a',name:'The Hi-Fi',suburb:'South Melbourne',cap:1000,genre:['Rock','Electronic'],pay:'Door deal',contact:'Pam Lee',email:'bookings@thehifi.com.au',status:'none',dist:'3.1 km',x:0.42,y:0.60},
+  {id:9,init:'DD',cls:'ni-p',name:'Ding Dong Lounge',suburb:'Melbourne CBD',cap:350,genre:['Rock','Indie'],pay:'Door deal',contact:'Chris Vale',email:'gigs@dingdong.com.au',status:'none',dist:'0.8 km',x:0.46,y:0.44},
+];
+
+var selected = null;
+var zoom = 1;
+var canvas, ctx, W, H;
+
+var statusColor = {booked:'#1D9E75',fu:'#534AB7',sent:'#BA7517',none:'#888780'};
+
+function init(){
+  canvas = document.getElementById('mapCanvas');
+  resize();
+  draw();
+  canvas.addEventListener('click', onMapClick);
+  window.addEventListener('resize', function(){resize();draw();});
+}
+
+function resize(){
+  var rect = canvas.parentElement.getBoundingClientRect();
+  W = canvas.width = rect.width;
+  H = canvas.height = rect.height;
+}
+
+function draw(){
+  if(!ctx) ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  // Map background — toned streets
+  ctx.fillStyle = '#eae6df';
+  ctx.fillRect(0,0,W,H);
+
+  // Draw suburb blocks
+  var blocks = [
+    {x:0.1,y:0.1,w:0.35,h:0.5,c:'#ddd8ce'},
+    {x:0.45,y:0.1,w:0.45,h:0.45,c:'#e2ddd6'},
+    {x:0.1,y:0.6,w:0.35,h:0.35,c:'#d8d3cb'},
+    {x:0.45,y:0.55,w:0.45,h:0.4,c:'#dcd7cf'},
+    {x:0.2,y:0.25,w:0.2,h:0.3,c:'#d0ccc4'},
+  ];
+  blocks.forEach(function(b){
+    ctx.fillStyle = b.c;
+    ctx.beginPath();
+    ctx.roundRect(b.x*W, b.y*H, b.w*W, b.h*H, 4);
+    ctx.fill();
+  });
+
+  // Roads
+  ctx.strokeStyle = '#c8c2b8';
+  ctx.lineWidth = 8;
+  var roads = [
+    [[0,0.42],[1,0.42]],[[0,0.58],[1,0.58]],
+    [[0.33,0],[0.33,1]],[[0.66,0],[0.66,1]],
+    [[0,0.25],[1,0.25]],[[0,0.72],[1,0.72]],
+    [[0.18,0],[0.18,1]],[[0.5,0],[0.5,1]],[[0.82,0],[0.82,1]],
+  ];
+  roads.forEach(function(r){
+    ctx.beginPath();
+    ctx.moveTo(r[0][0]*W, r[0][1]*H);
+    ctx.lineTo(r[1][0]*W, r[1][1]*H);
+    ctx.stroke();
+  });
+
+  // Road labels
+  ctx.fillStyle = '#aaa49a';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Swanston St', 0.5*W, 0.18*H);
+  ctx.fillText('Flinders St', 0.25*W, 0.40*H);
+  ctx.fillText('Chapel St', 0.66*W, 0.65*H);
+  ctx.fillText('Smith St', 0.82*W, 0.20*H);
+
+  // Suburb labels
+  ctx.fillStyle = '#b8b2a8';
+  ctx.font = '11px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('CBD', 0.33*W, 0.52*H);
+  ctx.fillText('Fitzroy', 0.65*W, 0.18*H);
+  ctx.fillText('St Kilda', 0.25*W, 0.85*H);
+  ctx.fillText('Richmond', 0.76*W, 0.62*H);
+  ctx.fillText('Armadale', 0.42*W, 0.88*H);
+  ctx.fillText('Collingwood', 0.76*W, 0.22*H);
+
+  // Pins
+  venues.forEach(function(v){
+    var px = v.x * W;
+    var py = v.y * H;
+    var col = statusColor[v.status] || '#888780';
+    var isSel = selected && selected.id === v.id;
+    var r = isSel ? 14 : 10;
+
+    // Shadow ring for selected
+    if(isSel){
+      ctx.beginPath();
+      ctx.arc(px, py-r, r+5, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(29,158,117,0.18)';
+      ctx.fill();
+    }
+
+    // Pin circle
+    ctx.beginPath();
+    ctx.arc(px, py-r, r, 0, Math.PI*2);
+    ctx.fillStyle = col;
+    ctx.fill();
+
+    // White border
+    ctx.beginPath();
+    ctx.arc(px, py-r, r, 0, Math.PI*2);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = v.private ? 2.5 : 1.5;
+    ctx.stroke();
+
+    // Private venue dashed ring
+    if(v.private){
+      ctx.beginPath();
+      ctx.arc(px, py-r, r+3, 0, Math.PI*2);
+      ctx.strokeStyle = '#1D9E75';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3,3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Pin tail
+    ctx.beginPath();
+    ctx.moveTo(px-4, py-4);
+    ctx.lineTo(px, py+2);
+    ctx.lineTo(px+4, py-4);
+    ctx.fillStyle = col;
+    ctx.fill();
+
+    // Initials
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold '+(isSel?'9px':'8px')+' sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(v.init, px, py-r+3);
+  });
+}
+
+function onMapClick(e){
+  var rect = canvas.getBoundingClientRect();
+  var mx = e.clientX - rect.left;
+  var my = e.clientY - rect.top;
+  var hit = null;
+  venues.forEach(function(v){
+    var px = v.x*W, py = v.y*H - 10;
+    var dx = mx-px, dy = my-py;
+    if(Math.sqrt(dx*dx+dy*dy) < 16) hit = v;
+  });
+  selected = hit;
+  draw();
+  renderPanel();
+}
+
+function renderPanel(){
+  var panel = document.getElementById('side-panel');
+  if(!selected){
+    panel.innerHTML = '<div class="panel-empty"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><div class="panel-empty-title">Select a venue</div><div class="panel-empty-sub">Click any pin on the map to see venue details, contact info, and outreach history.</div></div>';
+    return;
+  }
+  var v = selected;
+  var statusLabel = {booked:'Booked',fu:'Follow-up due',sent:'EPK sent',none:'Not contacted'};
+  var statusCls = {booked:'sb-booked',fu:'sb-fu',sent:'sb-sent',none:'sb-none'};
+  var col = statusColor[v.status];
+
+  var nearby = venues.filter(function(u){return u.id!==v.id;}).slice(0,4);
+
+  panel.innerHTML =
+    '<div class="panel-head">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
+    +'<div style="width:38px;height:38px;border-radius:9px;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:#fff;flex-shrink:0;">'+v.init+'</div>'
+    +'<div><div class="panel-venue-name">'+v.name+(v.private?' <span style="font-size:10px;color:#1D9E75;">private</span>':'')+'</div><div class="panel-venue-sub">'+v.suburb+' · '+v.dist+' away</div></div>'
+    +'</div>'
+    +'<span class="status-badge '+statusCls[v.status]+'">'+statusLabel[v.status]+'</span>'
+    +'<div class="panel-tags" style="margin-top:8px;">'+v.genre.map(function(g){return '<span class="ptag">'+g+'</span>';}).join('')+'</div>'
+    +'</div>'
+    +'<div class="panel-section"><div class="ps-title">Venue details</div>'
+    +'<div class="ps-row"><span class="ps-label">Capacity</span><span class="ps-val">'+v.cap+'</span></div>'
+    +'<div class="ps-row"><span class="ps-label">Pay type</span><span class="ps-val">'+v.pay+'</span></div>'
+    +'</div>'
+    +'<div class="panel-section"><div class="ps-title">Booking contact</div>'
+    +'<div class="contact-block"><div class="c-init">'+v.contact.split(' ').map(function(w){return w[0];}).join('')+'</div>'
+    +'<div><div class="c-name">'+v.contact+'</div><div class="c-email">'+v.email+'</div></div></div>'
+    +'</div>'
+    +'<div class="panel-section" style="padding-bottom:0;"><div class="ps-title" style="padding:0 0 8px;">Nearby venues</div>'
+    +'<div class="nearby-list">'
+    +nearby.map(function(u){
+      return '<div class="nearby-item" onclick="selectFromList('+u.id+')">'
+        +'<div class="nearby-init '+u.cls+'">'+u.init+'</div>'
+        +'<span class="nearby-name">'+u.name+'</span>'
+        +'<span class="nearby-dist">'+u.dist+'</span>'
+        +'</div>';
+    }).join('')
+    +'</div></div>'
+    +'<div class="panel-actions">'
+    +'<button class="btn-pri" onclick="sendPrompt(\'Show me the send EPK flow ↗\')">Send EPK to this venue ↗</button>'
+    +'<button class="btn-sec">View full venue profile</button>'
+    +'</div>';
+}
+
+function selectFromList(id){
+  selected = venues.find(function(v){return v.id===id;});
+  draw();
+  renderPanel();
+}
+
+function toggleChip(el){
+  el.classList.toggle('on');
+}
+
+function zoomIn(){ zoom = Math.min(zoom+0.2,2.5); }
+function zoomOut(){ zoom = Math.max(zoom-0.2,0.6); }
+
+window.addEventListener('load', init);
+setTimeout(init, 100);
+</script>

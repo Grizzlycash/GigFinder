@@ -1,0 +1,292 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.app{display:flex;height:740px;font-family:var(--font-sans);background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;overflow:hidden;}
+.sidebar{width:200px;min-width:200px;border-right:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);display:flex;flex-direction:column;}
+.sb-logo{padding:18px 16px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px;}
+.sb-mark{width:24px;height:24px;border-radius:6px;background:#1D9E75;display:flex;align-items:center;justify-content:center;}
+.sb-mark svg{width:12px;height:12px;stroke:#E1F5EE;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.sb-name{font-size:14px;font-weight:500;color:var(--color-text-primary);}
+.sb-nav{padding:12px 8px;flex:1;}
+.sb-section{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-tertiary);padding:10px 8px 4px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;margin-bottom:1px;}
+.sb-item:hover{background:var(--color-background-primary);}
+.sb-item.active{background:var(--color-background-primary);color:var(--color-text-primary);font-weight:500;border:0.5px solid var(--color-border-tertiary);}
+.sb-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.sb-badge{margin-left:auto;background:#E1F5EE;color:#085041;font-size:10px;font-weight:500;padding:1px 6px;border-radius:20px;}
+.sb-user{padding:12px;border-top:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px;}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#085041;flex-shrink:0;}
+.sb-uname{font-size:12px;font-weight:500;color:var(--color-text-primary);}
+.sb-plan{font-size:10px;color:#1D9E75;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--color-background-tertiary);}
+.topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:0 10px;flex:1;height:34px;}
+.search-wrap svg{width:13px;height:13px;stroke:var(--color-text-tertiary);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.search-wrap input{border:none;background:transparent;font-size:13px;color:var(--color-text-primary);outline:none;width:100%;}
+.search-wrap input::placeholder{color:var(--color-text-tertiary);}
+.sort-btn{display:flex;align-items:center;gap:5px;padding:0 10px;height:34px;border-radius:8px;font-size:12px;color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);cursor:pointer;white-space:nowrap;}
+.sort-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.add-btn{display:flex;align-items:center;gap:5px;padding:0 12px;height:34px;border-radius:8px;font-size:12px;font-weight:500;color:#E1F5EE;background:#1D9E75;border:none;cursor:pointer;white-space:nowrap;}
+.filter-bar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:8px 16px;display:flex;align-items:center;gap:6px;flex-shrink:0;overflow-x:auto;}
+.filter-label{font-size:11px;color:var(--color-text-tertiary);white-space:nowrap;margin-right:2px;}
+.chip{padding:3px 10px;border-radius:20px;border:0.5px solid var(--color-border-tertiary);font-size:12px;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;background:transparent;}
+.chip.on{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary);}
+.chip.teal{background:#E1F5EE;color:#085041;border-color:#9FE1CB;}
+.divider-v{width:0.5px;height:16px;background:var(--color-border-tertiary);margin:0 4px;flex-shrink:0;}
+.body{display:flex;flex:1;overflow:hidden;}
+.list-col{width:300px;min-width:300px;border-right:0.5px solid var(--color-border-tertiary);overflow-y:auto;background:var(--color-background-primary);}
+.list-header{padding:10px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between;}
+.list-count{font-size:12px;color:var(--color-text-secondary);}
+.vrow{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer;}
+.vrow:hover{background:var(--color-background-secondary);}
+.vrow.sel{background:#E1F5EE;}
+.vinit{width:34px;height:34px;min-width:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;}
+.vi-t{background:#E1F5EE;color:#085041;}
+.vi-b{background:#E6F1FB;color:#0C447C;}
+.vi-a{background:#FAEEDA;color:#633806;}
+.vi-g{background:#EAF3DE;color:#27500A;}
+.vi-p{background:#EEEDFE;color:#3C3489;}
+.vi-c{background:#FAECE7;color:#712B13;}
+.vinfo{flex:1;min-width:0;}
+.vinfo-name{font-size:13px;font-weight:500;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vinfo-meta{font-size:11px;color:var(--color-text-secondary);margin-top:1px;}
+.vstatus{font-size:10px;padding:2px 7px;border-radius:20px;white-space:nowrap;flex-shrink:0;}
+.s-none{background:var(--color-background-secondary);color:var(--color-text-secondary);}
+.s-sent{background:#FAEEDA;color:#633806;}
+.s-booked{background:#E1F5EE;color:#085041;}
+.s-fu{background:#EEEDFE;color:#3C3489;}
+.detail{flex:1;overflow-y:auto;padding:20px;}
+.d-header{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:flex-start;gap:14px;}
+.d-init{width:48px;height:48px;min-width:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;background:#E1F5EE;color:#085041;}
+.d-name{font-size:17px;font-weight:500;color:var(--color-text-primary);}
+.d-addr{font-size:12px;color:var(--color-text-secondary);margin-top:3px;}
+.d-tags{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;}
+.dtag{font-size:11px;padding:2px 8px;border-radius:20px;background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary);}
+.d-actions{margin-left:auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.epk-btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;background:#1D9E75;color:#E1F5EE;border:none;cursor:pointer;white-space:nowrap;}
+.sec-btn{padding:6px 12px;border-radius:8px;font-size:12px;color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary);background:transparent;cursor:pointer;white-space:nowrap;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.dcard{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:14px 16px;}
+.dcard-title{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-tertiary);margin-bottom:10px;}
+.drow{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:3px 0;}
+.drow-label{color:var(--color-text-secondary);}
+.drow-val{font-weight:500;color:var(--color-text-primary);}
+.drow-val.green{color:#1D9E75;}
+.contact-block{display:flex;align-items:center;gap:10px;padding:10px;background:var(--color-background-secondary);border-radius:8px;margin-top:6px;}
+.c-init{width:30px;height:30px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#0C447C;}
+.c-name{font-size:12px;font-weight:500;color:var(--color-text-primary);}
+.c-role{font-size:11px;color:var(--color-text-secondary);}
+.tl-item{display:flex;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--color-border-tertiary);}
+.tl-item:last-child{border-bottom:none;}
+.tl-dot{width:8px;height:8px;min-width:8px;border-radius:50%;margin-top:4px;}
+.tl-dot.done{background:#1D9E75;}
+.tl-dot.pend{background:var(--color-border-secondary);}
+.tl-text{font-size:12px;color:var(--color-text-primary);}
+.tl-date{font-size:11px;color:var(--color-text-tertiary);}
+</style>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-mark"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      <span class="sb-name">GigBook</span>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="sb-item active">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Venues
+      </div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        Outreach
+        <span class="sb-badge">3</span>
+      </div>
+      <div class="sb-section">My profile</div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        My EPK
+      </div>
+      <div class="sb-item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41"/></svg>
+        Settings
+      </div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar">AM</div>
+      <div>
+        <div class="sb-uname">Alex Morgan</div>
+        <div class="sb-plan">Pro plan</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input placeholder="Search venues by name, suburb or genre…" id="search-input" oninput="filterVenues()"/>
+      </div>
+      <button class="sort-btn">
+        <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/></svg>
+        Sort: capacity
+      </button>
+      <button class="add-btn">+ Add venue</button>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">Status:</span>
+      <button class="chip on" onclick="setFilter('status','all',this)">All</button>
+      <button class="chip" onclick="setFilter('status','none',this)">Not contacted</button>
+      <button class="chip" onclick="setFilter('status','sent',this)">EPK sent</button>
+      <button class="chip" onclick="setFilter('status','fu',this)">Follow-up due</button>
+      <button class="chip" onclick="setFilter('status','booked',this)">Booked</button>
+      <div class="divider-v"></div>
+      <span class="filter-label">Genre:</span>
+      <button class="chip" onclick="setFilter('genre','Rock',this)">Rock</button>
+      <button class="chip" onclick="setFilter('genre','Jazz',this)">Jazz</button>
+      <button class="chip" onclick="setFilter('genre','Folk',this)">Folk</button>
+      <button class="chip" onclick="setFilter('genre','Electronic',this)">Electronic</button>
+      <div class="divider-v"></div>
+      <span class="filter-label">Size:</span>
+      <button class="chip" onclick="setFilter('size','small',this)">Small &lt;100</button>
+      <button class="chip" onclick="setFilter('size','mid',this)">Mid 100–400</button>
+      <button class="chip" onclick="setFilter('size','large',this)">Large 400+</button>
+    </div>
+
+    <div class="body">
+      <div class="list-col">
+        <div class="list-header">
+          <span class="list-count" id="list-count">Showing 8 venues</span>
+          <span class="chip teal" style="font-size:11px;">Private: 2</span>
+        </div>
+        <div id="venue-list"></div>
+      </div>
+
+      <div class="detail" id="detail-panel"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var venues = [
+  {id:0,init:'TT',cls:'vi-t',name:'The Toff in Town',suburb:'Melbourne CBD',cap:250,genre:['Rock','Indie'],pay:'Door deal',contact:'Sarah Liu',email:'bookings@thetoff.com.au',website:'thetoff.com.au',status:'fu',private:false,history:[{done:true,text:'EPK sent',date:'12 Mar 2025'},{done:true,text:'Follow-up sent',date:'26 Mar 2025'},{done:false,text:'Awaiting response',date:''}]},
+  {id:1,init:'BB',cls:'vi-b',name:'Bar Brosé',suburb:'Armadale',cap:80,genre:['Jazz','Acoustic'],pay:'Flat fee',contact:'Tom Briggs',email:'tom@barbrose.com.au',website:'barbrose.com.au',status:'booked',private:false,history:[{done:true,text:'EPK sent',date:'1 Mar 2025'},{done:true,text:'Follow-up sent',date:'14 Mar 2025'},{done:true,text:'Show confirmed — 22 May',date:'2 Apr 2025'}]},
+  {id:2,init:'PP',cls:'vi-a',name:'The Prince Bandroom',suburb:'St Kilda',cap:800,genre:['Rock','All genres'],pay:'Door deal',contact:'Jess Park',email:'bookings@theprince.com.au',website:'theprince.com.au',status:'sent',private:false,history:[{done:true,text:'EPK sent',date:'1 Apr 2025'},{done:false,text:'Follow-up due 10 Apr',date:''}]},
+  {id:3,init:'NC',cls:'vi-g',name:'Night Cat',suburb:'Fitzroy',cap:550,genre:['Latin','World','Dance'],pay:'Revenue share',contact:'Maria Conti',email:'gigs@nightcat.com.au',website:'nightcat.com.au',status:'sent',private:false,history:[{done:true,text:'EPK sent',date:'28 Mar 2025'},{done:false,text:'Follow-up due 11 Apr',date:''}]},
+  {id:4,init:'LH',cls:'vi-p',name:'The Leadbeater Hotel',suburb:'Richmond',cap:120,genre:['Folk','Acoustic','Rock'],pay:'Door deal',contact:'Dave Chen',email:'dave@leadbeater.com.au',website:'leadbeater.com.au',status:'none',private:false,history:[]},
+  {id:5,init:'CE',cls:'vi-c',name:'Cherry Bar',suburb:'Melbourne CBD',cap:100,genre:['Rock','Metal','Punk'],pay:'Door deal',contact:'James Young',email:'james@cherrybar.com.au',website:'cherrybar.com.au',status:'none',private:false,history:[]},
+  {id:6,init:'WH',cls:'vi-t',name:'Workers Club',suburb:'Fitzroy',cap:300,genre:['Indie','Electronic','All genres'],pay:'Revenue share',contact:'Amy Wu',email:'bookings@theworkersclub.com.au',website:'theworkersclub.com.au',status:'none',private:false,history:[]},
+  {id:7,init:'MP',cls:'vi-b',name:'The Milk Bar',suburb:'Collingwood',cap:60,genre:['Jazz','Folk','Acoustic'],pay:'Flat fee',contact:'Leon Rowe',email:'leon@themilkbar.com.au',website:'themilkbar.com.au',status:'none',private:true,history:[]},
+];
+
+var activeFilters = {status:'all',genre:null,size:null};
+var selectedId = 0;
+var searchVal = '';
+
+function statusLabel(s){
+  if(s==='booked') return '<span class="vstatus s-booked">Booked</span>';
+  if(s==='sent')   return '<span class="vstatus s-sent">EPK sent</span>';
+  if(s==='fu')     return '<span class="vstatus s-fu">Follow-up due</span>';
+  return '<span class="vstatus s-none">Not contacted</span>';
+}
+
+function filtered(){
+  return venues.filter(function(v){
+    if(searchVal && !v.name.toLowerCase().includes(searchVal) && !v.suburb.toLowerCase().includes(searchVal) && !v.genre.join(' ').toLowerCase().includes(searchVal)) return false;
+    if(activeFilters.status!=='all' && v.status!==activeFilters.status) return false;
+    if(activeFilters.genre && !v.genre.some(function(g){return g===activeFilters.genre;})) return false;
+    if(activeFilters.size==='small' && v.cap>=100) return false;
+    if(activeFilters.size==='mid' && (v.cap<100||v.cap>=400)) return false;
+    if(activeFilters.size==='large' && v.cap<400) return false;
+    return true;
+  });
+}
+
+function renderList(){
+  var fv = filtered();
+  document.getElementById('list-count').textContent = 'Showing '+fv.length+' venue'+(fv.length!==1?'s':'');
+  var html = '';
+  fv.forEach(function(v){
+    var sel = v.id===selectedId;
+    html += '<div class="vrow'+(sel?' sel':'')+'" onclick="selectVenue('+v.id+')">'
+      +'<div class="vinit '+v.cls+'">'+v.init+'</div>'
+      +'<div class="vinfo"><div class="vinfo-name">'+v.name+(v.private?' <span style="font-size:10px;color:#1D9E75;">private</span>':'')+'</div><div class="vinfo-meta">'+v.suburb+' · Cap. '+v.cap+'</div></div>'
+      +statusLabel(v.status)
+      +'</div>';
+  });
+  document.getElementById('venue-list').innerHTML = html || '<div style="padding:20px 14px;font-size:13px;color:var(--color-text-tertiary);">No venues match your filters.</div>';
+}
+
+function renderDetail(){
+  var v = venues.find(function(x){return x.id===selectedId;});
+  if(!v){document.getElementById('detail-panel').innerHTML='';return;}
+  var histHtml = v.history.length ? v.history.map(function(h){
+    return '<div class="tl-item"><div class="tl-dot '+(h.done?'done':'pend')+'"></div><div><div class="tl-text">'+h.text+'</div>'+(h.date?'<div class="tl-date">'+h.date+'</div>':'')+'</div></div>';
+  }).join('') : '<div style="font-size:12px;color:var(--color-text-tertiary);padding:8px 0;">No outreach yet.</div>';
+
+  document.getElementById('detail-panel').innerHTML =
+    '<div class="d-header">'
+    +'<div class="d-init '+v.cls+'">'+v.init+'</div>'
+    +'<div style="flex:1;min-width:0;">'
+    +'<div class="d-name">'+v.name+'</div>'
+    +'<div class="d-addr">'+v.suburb+(v.private?' · <span style="color:#1D9E75;font-size:11px;">Your private venue</span>':'')+'</div>'
+    +'<div class="d-tags">'+v.genre.map(function(g){return '<span class="dtag">'+g+'</span>';}).join('')+'</div>'
+    +'</div>'
+    +'<div class="d-actions">'
+    +'<button class="epk-btn" onclick="sendPrompt(\'Show me the send EPK flow for '+v.name+' ↗\')">Send EPK</button>'
+    +'<button class="sec-btn">Add note</button>'
+    +'</div>'
+    +'</div>'
+
+    +'<div class="grid2">'
+    +'<div class="dcard"><div class="dcard-title">Venue details</div>'
+    +'<div class="drow"><span class="drow-label">Capacity</span><span class="drow-val">'+v.cap+'</span></div>'
+    +'<div class="drow"><span class="drow-label">Pay type</span><span class="drow-val">'+v.pay+'</span></div>'
+    +'<div class="drow"><span class="drow-label">Website</span><span class="drow-val green">'+v.website+'</span></div>'
+    +'</div>'
+    +'<div class="dcard"><div class="dcard-title">Booking contact</div>'
+    +'<div class="contact-block"><div class="c-init">'+v.contact.split(' ').map(function(w){return w[0];}).join('')+'</div>'
+    +'<div><div class="c-name">'+v.contact+'</div><div class="c-role">'+v.email+'</div></div></div>'
+    +'</div>'
+    +'</div>'
+
+    +'<div class="dcard"><div class="dcard-title">Outreach history</div>'+histHtml+'</div>';
+}
+
+function selectVenue(id){
+  selectedId = id;
+  renderList();
+  renderDetail();
+}
+
+function setFilter(type, val, el){
+  var group = el.closest('.filter-bar').querySelectorAll('.chip');
+  var siblings = [];
+  group.forEach(function(c){
+    var oc = c.getAttribute('onclick')||'';
+    if(oc.includes("'"+type+"'")) siblings.push(c);
+  });
+  if(type==='status'){
+    siblings.forEach(function(c){c.classList.remove('on');});
+    el.classList.add('on');
+    activeFilters.status = val;
+  } else {
+    if(el.classList.contains('on')){el.classList.remove('on');activeFilters[type]=null;}
+    else{siblings.forEach(function(c){c.classList.remove('on');});el.classList.add('on');activeFilters[type]=val;}
+  }
+  renderList();
+}
+
+function filterVenues(){
+  searchVal = document.getElementById('search-input').value.toLowerCase();
+  renderList();
+}
+
+renderList();
+renderDetail();
+</script>

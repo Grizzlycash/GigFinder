@@ -1,0 +1,348 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+.app{display:flex;height:820px;font-family:var(--font-sans);background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:16px;overflow:hidden;}
+.sidebar{width:200px;min-width:200px;border-right:0.5px solid var(--color-border-tertiary);background:var(--color-background-secondary);display:flex;flex-direction:column;}
+.sb-logo{padding:18px 16px 14px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px;}
+.sb-mark{width:24px;height:24px;border-radius:6px;background:#1D9E75;display:flex;align-items:center;justify-content:center;}
+.sb-mark svg{width:12px;height:12px;stroke:#E1F5EE;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.sb-name{font-size:14px;font-weight:500;color:var(--color-text-primary);}
+.sb-nav{padding:12px 8px;flex:1;}
+.sb-section{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--color-text-tertiary);padding:10px 8px 4px;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;font-size:13px;color:var(--color-text-secondary);cursor:pointer;margin-bottom:1px;}
+.sb-item:hover{background:var(--color-background-primary);}
+.sb-item.active{background:var(--color-background-primary);color:var(--color-text-primary);font-weight:500;border:0.5px solid var(--color-border-tertiary);}
+.sb-item svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.sb-badge{margin-left:auto;background:#E1F5EE;color:#085041;font-size:10px;font-weight:500;padding:1px 6px;border-radius:20px;}
+.sb-user{padding:12px;border-top:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:8px;}
+.sb-avatar{width:28px;height:28px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#085041;flex-shrink:0;}
+.sb-uname{font-size:12px;font-weight:500;color:var(--color-text-primary);}
+.sb-plan{font-size:10px;color:#1D9E75;}
+.main{flex:1;display:flex;overflow:hidden;background:var(--color-background-tertiary);}
+.epk-nav{width:200px;min-width:200px;border-right:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary);display:flex;flex-direction:column;}
+.epk-nav-head{padding:16px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.epk-nav-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px;}
+.epk-nav-sub{font-size:11px;color:var(--color-text-secondary);}
+.epk-progress{padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);}
+.prog-bar-track{height:4px;background:var(--color-background-secondary);border-radius:2px;margin-bottom:6px;}
+.prog-bar-fill{height:100%;border-radius:2px;background:#1D9E75;transition:width .3s;}
+.prog-text{font-size:11px;color:var(--color-text-secondary);}
+.epk-sections{flex:1;overflow-y:auto;padding:8px;}
+.epk-sec-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:1px;}
+.epk-sec-item:hover{background:var(--color-background-secondary);}
+.epk-sec-item.active{background:#E1F5EE;}
+.epk-sec-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.epk-sec-icon svg{width:13px;height:13px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.epk-sec-label{font-size:13px;color:var(--color-text-primary);flex:1;}
+.epk-sec-item.active .epk-sec-label{color:#085041;font-weight:500;}
+.epk-sec-check{width:16px;height:16px;border-radius:50%;background:#E1F5EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.epk-sec-check svg{width:9px;height:9px;stroke:#1D9E75;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.epk-sec-check.empty{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);}
+.epk-preview-btn{margin:12px;padding:9px;border-radius:9px;font-size:12px;font-weight:500;background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.epk-preview-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.content-topbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:13px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.content-title{font-size:15px;font-weight:500;color:var(--color-text-primary);flex:1;}
+.pro-badge{font-size:11px;background:#EEEDFE;color:#3C3489;padding:3px 9px;border-radius:20px;font-weight:500;}
+.save-btn{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:500;background:#1D9E75;color:#E1F5EE;border:none;cursor:pointer;}
+.scroll{flex:1;overflow-y:auto;padding:20px 24px;}
+.field-section{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;margin-bottom:14px;overflow:hidden;}
+.fs-head{padding:13px 18px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:10px;}
+.fs-icon{width:30px;height:30px;border-radius:8px;background:#E1F5EE;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.fs-icon svg{width:14px;height:14px;stroke:#085041;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.fs-title{font-size:13px;font-weight:500;color:var(--color-text-primary);}
+.fs-sub{font-size:11px;color:var(--color-text-secondary);margin-top:1px;}
+.fs-body{padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
+.field-group{display:flex;flex-direction:column;gap:5px;}
+.field-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field-label{font-size:12px;color:var(--color-text-secondary);font-weight:500;}
+.field-hint{font-size:11px;color:var(--color-text-tertiary);margin-top:3px;}
+.field-input{width:100%;padding:0 11px;height:36px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:13px;color:var(--color-text-primary);background:var(--color-background-primary);outline:none;}
+.field-input:focus{border-color:#1D9E75;box-shadow:0 0 0 3px rgba(29,158,117,.1);}
+.field-textarea{width:100%;padding:10px 11px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:13px;color:var(--color-text-primary);background:var(--color-background-primary);outline:none;resize:none;line-height:1.65;}
+.field-textarea:focus{border-color:#1D9E75;box-shadow:0 0 0 3px rgba(29,158,117,.1);}
+.field-select{width:100%;padding:0 11px;height:36px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:13px;color:var(--color-text-primary);background:var(--color-background-primary);outline:none;}
+.char-count{font-size:11px;color:var(--color-text-tertiary);text-align:right;margin-top:3px;}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.photo-slot{aspect-ratio:1;border:0.5px dashed var(--color-border-secondary);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;background:var(--color-background-secondary);}
+.photo-slot:hover{border-color:#1D9E75;background:#E1F5EE;}
+.photo-slot svg{width:20px;height:20px;stroke:var(--color-text-tertiary);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.photo-slot.filled{border-style:solid;border-color:var(--color-border-tertiary);background:var(--color-background-secondary);position:relative;}
+.photo-slot.filled .photo-label{font-size:11px;color:var(--color-text-secondary);}
+.photo-initials{width:40px;height:40px;border-radius:8px;background:#E1F5EE;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#085041;}
+.photo-slot-label{font-size:11px;color:var(--color-text-tertiary);}
+.link-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.link-platform-icon{width:30px;height:30px;border-radius:7px;background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.link-platform-icon svg{width:14px;height:14px;stroke:var(--color-text-secondary);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.link-platform-label{font-size:12px;font-weight:500;color:var(--color-text-primary);min-width:80px;}
+.rider-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.tag-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.genre-tag{padding:4px 12px;border-radius:20px;font-size:12px;border:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary);cursor:pointer;background:transparent;}
+.genre-tag.on{background:#1D9E75;color:#E1F5EE;border-color:#1D9E75;}
+.bottom-bar{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.nav-hint{font-size:12px;color:var(--color-text-tertiary);}
+.bar-btns{display:flex;gap:8px;}
+.bar-btn-sec{padding:8px 16px;border-radius:9px;font-size:13px;border:0.5px solid var(--color-border-tertiary);background:transparent;color:var(--color-text-secondary);cursor:pointer;}
+.bar-btn-pri{padding:8px 20px;border-radius:9px;font-size:13px;font-weight:500;background:#1D9E75;color:#E1F5EE;border:none;cursor:pointer;}
+</style>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-mark"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+      <span class="sb-name">GigBook</span>
+    </div>
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Venues</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Map</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>Outreach<span class="sb-badge">3</span></div>
+      <div class="sb-section">My profile</div>
+      <div class="sb-item active"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>My EPK</div>
+      <div class="sb-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41"/></svg>Settings</div>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar">AM</div>
+      <div><div class="sb-uname">Alex Morgan</div><div class="sb-plan">Pro plan</div></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="epk-nav">
+      <div class="epk-nav-head">
+        <div class="epk-nav-title">My EPK</div>
+        <div class="epk-nav-sub">Electronic press kit</div>
+      </div>
+      <div class="epk-progress">
+        <div class="prog-bar-track"><div class="prog-bar-fill" id="prog-fill" style="width:40%"></div></div>
+        <div class="prog-text" id="prog-text">2 of 5 sections complete</div>
+      </div>
+      <div class="epk-sections" id="epk-nav-list"></div>
+      <button class="epk-preview-btn" onclick="sendPrompt('Show me a preview of my EPK ↗')">
+        <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Preview EPK
+      </button>
+    </div>
+
+    <div class="content-area">
+      <div class="content-topbar">
+        <span class="content-title" id="content-title">Biography</span>
+        <span class="pro-badge">Pro feature</span>
+        <button class="save-btn" onclick="markDone()">Save section</button>
+      </div>
+      <div class="scroll" id="content-body"></div>
+      <div class="bottom-bar">
+        <span class="nav-hint" id="nav-hint">Section 1 of 5</span>
+        <div class="bar-btns">
+          <button class="bar-btn-sec" id="btn-prev" onclick="prevSec()">Previous</button>
+          <button class="bar-btn-pri" id="btn-next" onclick="nextSec()">Next: Photos</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var sections = [
+  {id:'bio',label:'Biography',icon:'<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',done:true},
+  {id:'photos',label:'Photos',icon:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',done:true},
+  {id:'music',label:'Music links',icon:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',done:false},
+  {id:'socials',label:'Social media',icon:'<path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>',done:false},
+  {id:'rider',label:'Tech rider',icon:'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/>',done:false},
+];
+var current = 0;
+var genres = ['Indie folk','Acoustic','Indie rock','Singer-songwriter','Atmospheric'];
+var activeGenres = ['Indie folk','Acoustic','Singer-songwriter'];
+
+function renderNav(){
+  var total = sections.length;
+  var done = sections.filter(function(s){return s.done;}).length;
+  var pct = Math.round((done/total)*100);
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('prog-text').textContent = done+' of '+total+' sections complete';
+
+  var html = '';
+  sections.forEach(function(s,i){
+    var isActive = i===current;
+    var bg = isActive?'background:#E1F5EE;':'';
+    var checkHtml = s.done
+      ? '<div class="epk-sec-check"><svg viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3"/></svg></div>'
+      : '<div class="epk-sec-check empty"></div>';
+    html += '<div class="epk-sec-item'+(isActive?' active':'')+'" style="'+bg+'" onclick="goSec('+i+')">'
+      +'<div class="epk-sec-icon" style="background:'+(isActive?'#C3EDD9':'var(--color-background-secondary)')+';"><svg viewBox="0 0 24 24" style="stroke:'+(isActive?'#085041':'var(--color-text-secondary)')+'">'+s.icon+'</svg></div>'
+      +'<span class="epk-sec-label">'+s.label+'</span>'
+      +checkHtml
+      +'</div>';
+  });
+  document.getElementById('epk-nav-list').innerHTML = html;
+}
+
+function renderContent(){
+  var s = sections[current];
+  document.getElementById('content-title').textContent = s.label;
+  document.getElementById('nav-hint').textContent = 'Section '+(current+1)+' of '+sections.length;
+  var prev = document.getElementById('btn-prev');
+  var next = document.getElementById('btn-next');
+  prev.style.opacity = current===0?'0.4':'1';
+  prev.disabled = current===0;
+  if(current===sections.length-1){
+    next.textContent = 'Finish EPK';
+    next.onclick = function(){sendPrompt('My EPK is complete — show me the EPK preview ↗');};
+  } else {
+    next.textContent = 'Next: '+sections[current+1].label;
+    next.onclick = nextSec;
+  }
+
+  var html = '';
+  if(s.id==='bio') html = bioBio();
+  else if(s.id==='photos') html = bioPhotos();
+  else if(s.id==='music') html = bioMusic();
+  else if(s.id==='socials') html = bioSocials();
+  else if(s.id==='rider') html = bioRider();
+  document.getElementById('content-body').innerHTML = html;
+}
+
+function bioBio(){
+  var tagHtml = genres.map(function(g){
+    return '<button class="genre-tag'+(activeGenres.includes(g)?' on':'')+'" onclick="toggleGenre(\''+g+'\')" >'+g+'</button>';
+  }).join('');
+  return '<div class="field-section"><div class="fs-head"><div class="fs-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><div class="fs-title">Artist details</div><div class="fs-sub">Basic info shown at the top of your EPK</div></div></div>'
+    +'<div class="fs-body">'
+    +'<div class="field-row-2">'
+    +'<div class="field-group"><label class="field-label">Artist / band name</label><input class="field-input" value="Alex Morgan"/></div>'
+    +'<div class="field-group"><label class="field-label">Based in</label><input class="field-input" value="Melbourne, VIC"/></div>'
+    +'</div>'
+    +'<div class="field-group"><label class="field-label">Genre tags</label><div class="tag-row" id="genre-tags">'+tagHtml+'</div><div class="field-hint">Select all that apply — these are used to match you with suitable venues</div></div>'
+    +'<div class="field-row-2">'
+    +'<div class="field-group"><label class="field-label">Typical set length</label><select class="field-select"><option>30 minutes</option><option>45 minutes</option><option selected>60 minutes</option><option>90 minutes</option><option>120 minutes</option></select></div>'
+    +'<div class="field-group"><label class="field-label">Typical audience size</label><select class="field-select"><option>Under 50</option><option selected>50–150</option><option>150–300</option><option>300–600</option><option>600+</option></select></div>'
+    +'</div>'
+    +'</div></div>'
+    +'<div class="field-section"><div class="fs-head"><div class="fs-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div><div class="fs-title">Biography</div><div class="fs-sub">This is used to personalise your booking emails</div></div></div>'
+    +'<div class="fs-body">'
+    +'<div class="field-group"><label class="field-label">Short bio <span style="color:var(--color-text-tertiary);font-weight:400;">(used in email drafts)</span></label>'
+    +'<textarea class="field-textarea" rows="4" id="short-bio" oninput="updateCount(\'short-bio\',\'sc-short\',200)">Alex Morgan is a Melbourne-based singer-songwriter blending indie folk with atmospheric production. With a warm, intimate stage presence and a 60-minute acoustic set, Alex is well-suited to small-to-mid capacity venues and Sunday afternoon sessions.</textarea>'
+    +'<div class="char-count"><span id="sc-short">189</span> / 200 characters recommended</div></div>'
+    +'<div class="field-group"><label class="field-label">Full biography <span style="color:var(--color-text-tertiary);font-weight:400;">(shown in EPK)</span></label>'
+    +'<textarea class="field-textarea" rows="6" id="full-bio">Alex Morgan is a Melbourne-based singer-songwriter whose music blends indie folk with layered, atmospheric production. Drawing on influences ranging from Bon Iver to Aldous Harding, Alex crafts songs that are intimate and cinematic in equal measure.\n\nWith a growing catalogue of original material and a reputation for compelling live performances, Alex has played at Bar Brosé, The Toff in Town, and various festival stages across Victoria. A 60-minute acoustic set is available, adaptable to both seated listening rooms and mid-capacity live music venues.</textarea>'
+    +'</div>'
+    +'<div class="field-group"><label class="field-label">Notable performances / press</label>'
+    +'<textarea class="field-textarea" rows="3" placeholder="e.g. Bar Brosé residency (2024), support for [Artist] at The Toff, featured in Beat Magazine...">Bar Brosé residency (2024) · Support for Aldous Harding at The Toff in Town · Featured in Beat Magazine \'Best of Melbourne\' 2024</textarea>'
+    +'</div>'
+    +'</div></div>';
+}
+
+function bioPhotos(){
+  return '<div class="field-section"><div class="fs-head"><div class="fs-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div><div><div class="fs-title">Press photos</div><div class="fs-sub">High-res images included with your EPK</div></div></div>'
+    +'<div class="fs-body">'
+    +'<div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px;">Upload up to 6 photos. JPG or PNG, minimum 1200px wide. First photo is used as the cover image.</div>'
+    +'<div class="photo-grid">'
+    +'<div class="photo-slot filled"><div class="photo-initials">AM</div><div class="photo-label" style="font-size:11px;color:var(--color-text-secondary);margin-top:6px;">Cover photo</div></div>'
+    +'<div class="photo-slot filled"><div class="photo-initials" style="background:#E6F1FB;color:#0C447C;">AM</div><div class="photo-label" style="font-size:11px;color:var(--color-text-secondary);margin-top:6px;">Live shot</div></div>'
+    +'<div class="photo-slot"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="photo-slot-label">Add photo</span></div>'
+    +'<div class="photo-slot"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="photo-slot-label">Add photo</span></div>'
+    +'<div class="photo-slot"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="photo-slot-label">Add photo</span></div>'
+    +'<div class="photo-slot"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span class="photo-slot-label">Add photo</span></div>'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--color-text-tertiary);margin-top:6px;">Drag to reorder · Click to replace or remove</div>'
+    +'</div></div>';
+}
+
+function bioMusic(){
+  var platforms = [
+    {name:'Spotify',icon:'<circle cx="12" cy="12" r="10"/><path d="M8 13.5a7 7 0 018-1m-9 3.5a9 9 0 0110-1.5M7 10a11 11 0 0112-.5"/>',val:'open.spotify.com/artist/alexmorgan'},
+    {name:'SoundCloud',icon:'<path d="M2 14a2 2 0 002 2h15a3 3 0 000-6h-1A5 5 0 003 12"/>',val:'soundcloud.com/alexmorgan'},
+    {name:'Apple Music',icon:'<path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M10 16.5v-9l7 2-7 7z"/>',val:''},
+    {name:'YouTube',icon:'<path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58a2.78 2.78 0 001.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.96A29 29 0 0023 12a29 29 0 00-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/>',val:''},
+    {name:'Bandcamp',icon:'<path d="M0 18l7-12h17L17 18z"/>',val:'alexmorgan.bandcamp.com'},
+  ];
+  var html = '<div class="field-section"><div class="fs-head"><div class="fs-icon"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div><div><div class="fs-title">Music links</div><div class="fs-sub">Platforms included in your EPK and email footer</div></div></div><div class="fs-body">';
+  platforms.forEach(function(p){
+    html += '<div class="link-row"><div class="link-platform-icon"><svg viewBox="0 0 24 24" style="stroke:var(--color-text-secondary);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;">'+p.icon+'</svg></div>'
+      +'<span class="link-platform-label">'+p.name+'</span>'
+      +'<input class="field-input" style="flex:1;" placeholder="Paste your '+p.name+' link…" value="'+p.val+'"/>'
+      +'</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function bioSocials(){
+  var platforms = [
+    {name:'Instagram',icon:'<rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>',val:'instagram.com/alexmorganmusic'},
+    {name:'Facebook',icon:'<path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>',val:'facebook.com/alexmorganmusic'},
+    {name:'TikTok',icon:'<path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/>',val:''},
+    {name:'X / Twitter',icon:'<path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/>',val:''},
+    {name:'Website',icon:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>',val:'alexmorgan.com.au'},
+  ];
+  var html = '<div class="field-section"><div class="fs-head"><div class="fs-icon"><svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg></div><div><div class="fs-title">Social media & website</div><div class="fs-sub">Links shown in your EPK footer</div></div></div><div class="fs-body">';
+  platforms.forEach(function(p){
+    html += '<div class="link-row"><div class="link-platform-icon"><svg viewBox="0 0 24 24" style="stroke:var(--color-text-secondary);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;">'+p.icon+'</svg></div>'
+      +'<span class="link-platform-label">'+p.name+'</span>'
+      +'<input class="field-input" style="flex:1;" placeholder="Your '+p.name+' URL…" value="'+p.val+'"/>'
+      +'</div>';
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function bioRider(){
+  return '<div class="field-section"><div class="fs-head"><div class="fs-icon"><svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg></div><div><div class="fs-title">Technical requirements</div><div class="fs-sub">What you need from the venue</div></div></div>'
+    +'<div class="fs-body"><div class="rider-grid">'
+    +'<div class="field-group"><label class="field-label">Performance format</label><select class="field-select"><option selected>Solo acoustic</option><option>Duo</option><option>Full band</option><option>Solo with backing track</option></select></div>'
+    +'<div class="field-group"><label class="field-label">PA required</label><select class="field-select"><option selected>Yes — venue to provide</option><option>No — self-contained</option><option>Flexible</option></select></div>'
+    +'<div class="field-group"><label class="field-label">Microphones</label><input class="field-input" value="1 × vocal mic, 1 × instrument mic"/></div>'
+    +'<div class="field-group"><label class="field-label">DI boxes</label><input class="field-input" value="1 × DI (acoustic guitar)"/></div>'
+    +'<div class="field-group"><label class="field-label">Monitors</label><input class="field-input" value="1 × floor wedge"/></div>'
+    +'<div class="field-group"><label class="field-label">Setup time needed</label><select class="field-select"><option>15 minutes</option><option selected>30 minutes</option><option>45 minutes</option><option>60 minutes</option></select></div>'
+    +'</div>'
+    +'<div class="field-group" style="margin-top:14px;"><label class="field-label">Additional notes</label>'
+    +'<textarea class="field-textarea" rows="3" placeholder="Any other technical requirements or preferences…">Happy to adapt to the venue\'s existing setup. Can provide own acoustic amp if needed. Prefer a quiet stage environment for intimate shows.</textarea>'
+    +'</div>'
+    +'<div class="field-group"><label class="field-label">Hospitality</label>'
+    +'<input class="field-input" placeholder="e.g. meal, drinks tab, parking…" value="Meal or drinks tab appreciated · Parking or travel reimbursement if outside CBD"/>'
+    +'</div>'
+    +'</div></div>';
+}
+
+function toggleGenre(g){
+  var idx = activeGenres.indexOf(g);
+  if(idx>-1) activeGenres.splice(idx,1);
+  else activeGenres.push(g);
+  var tags = document.getElementById('genre-tags');
+  if(tags){
+    tags.querySelectorAll('.genre-tag').forEach(function(btn){
+      btn.classList.toggle('on', activeGenres.includes(btn.textContent));
+    });
+  }
+}
+
+function updateCount(taId, countId, max){
+  var ta = document.getElementById(taId);
+  var ct = document.getElementById(countId);
+  if(ta&&ct) ct.textContent = ta.value.length;
+}
+
+function markDone(){
+  sections[current].done = true;
+  renderNav();
+}
+
+function goSec(i){
+  current = i;
+  renderNav();
+  renderContent();
+}
+
+function nextSec(){
+  if(current<sections.length-1){current++;renderNav();renderContent();}
+}
+
+function prevSec(){
+  if(current>0){current--;renderNav();renderContent();}
+}
+
+renderNav();
+renderContent();
+</script>

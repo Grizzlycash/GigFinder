@@ -7,15 +7,25 @@ This repository is a **working reference implementation of the v2.0 product spec
 screen and flow in the spec is clickable here, so decisions can be checked against real
 interaction before they are rebuilt in Bubble.io.
 
+**Picking this up after a break?** `docs/handover.md` has the current state, the decisions
+already made, and the open questions.
+
 ## Run it
 
 ```bash
 npm start          # http://localhost:4173
+npm test           # end-to-end browser suite (needs Playwright)
 ```
 
-No build step, no dependencies. `server.js` is a ~40-line static file server; the app is
-plain ES modules, so any static host works. A server *is* required — browsers block ES
-module imports over `file://`.
+No build step and no dependencies for the app itself. `server.js` is a ~40-line static file
+server; the app is plain ES modules, so any static host works. A server *is* required —
+browsers block ES module imports over `file://`.
+
+`npm test` drives the whole product in Chromium — signup through onboarding, venue
+filtering, map pins, both tier states of the EPK generator, a real send, the tracker, the
+admin CSV import — and fails on any console or page error. It starts and stops its own
+server and writes screenshots to `test/screenshots/`. Install Playwright first:
+`npm i -D playwright && npx playwright install chromium`.
 
 ## What's in it
 
@@ -86,7 +96,10 @@ assets/js/
   seed.js                 seed venue database
   ui.js                   escaping, icons, formatting, toasts, modals
   views/                  one module per screen: { title, render(ctx), mount(el, ctx) }
+test/smoke.mjs            end-to-end browser suite (npm test)
+docs/handover.md          state, decisions and open questions — read this first
 docs/product-spec.md      condensed v2.0 spec
+docs/mockups/             the five source HTML mockups the UI was built against
 ```
 
 Each view exports `render(ctx)` returning an HTML string plus an optional `mount(root, ctx)`

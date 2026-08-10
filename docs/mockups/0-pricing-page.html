@@ -1,0 +1,169 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.page { background: var(--color-background-tertiary); padding: 48px 24px; font-family: var(--font-sans); }
+.header { text-align: center; margin-bottom: 40px; }
+.header h1 { font-size: 28px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; }
+.header p { font-size: 15px; color: var(--color-text-secondary); }
+.toggle-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 36px; }
+.toggle-label { font-size: 13px; color: var(--color-text-secondary); }
+.toggle-label.active { color: var(--color-text-primary); font-weight: 500; }
+.toggle-track { position: relative; width: 40px; height: 22px; background: var(--color-border-secondary); border-radius: 11px; cursor: pointer; transition: background .2s; }
+.toggle-track.on { background: #1D9E75; }
+.toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: white; transition: transform .2s; }
+.toggle-track.on .toggle-thumb { transform: translateX(18px); }
+.save-badge { font-size: 11px; background: #E1F5EE; color: #085041; padding: 3px 8px; border-radius: 20px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; max-width: 680px; margin: 0 auto; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 16px; padding: 28px 24px; display: flex; flex-direction: column; }
+.card.featured { border: 2px solid #1D9E75; }
+.tier-badge { font-size: 11px; font-weight: 500; padding: 4px 12px; border-radius: 20px; display: inline-block; margin-bottom: 16px; width: fit-content; }
+.badge-basic { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+.badge-pro { background: #E1F5EE; color: #085041; }
+.badge-popular { background: #1D9E75; color: #E1F5EE; }
+.tier-name { font-size: 20px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.tier-desc { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 20px; line-height: 1.5; }
+.price-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 6px; }
+.price-amount { font-size: 32px; font-weight: 500; color: var(--color-text-primary); }
+.price-period { font-size: 13px; color: var(--color-text-secondary); }
+.price-annual { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 24px; }
+.divider { height: 0.5px; background: var(--color-border-tertiary); margin-bottom: 20px; }
+.feature-list { list-style: none; display: flex; flex-direction: column; gap: 11px; flex: 1; margin-bottom: 28px; }
+.feature-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--color-text-primary); line-height: 1.45; }
+.check { width: 16px; height: 16px; min-width: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.check-basic { background: var(--color-background-secondary); }
+.check-pro { background: #E1F5EE; }
+.check svg { width: 9px; height: 9px; }
+.check-basic svg { stroke: var(--color-text-secondary); }
+.check-pro svg { stroke: #085041; }
+.limit-note { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.cta-btn { width: 100%; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; text-align: center; }
+.cta-basic { background: var(--color-background-secondary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); }
+.cta-pro { background: #1D9E75; color: #E1F5EE; }
+.cta-basic:hover { background: var(--color-background-tertiary); }
+.cta-pro:hover { background: #0F6E56; }
+.footer-note { text-align: center; margin-top: 28px; font-size: 12px; color: var(--color-text-tertiary); }
+</style>
+
+<div class="page">
+  <div class="header">
+    <h1>Simple, transparent pricing</h1>
+    <p>Everything you need to book more shows — no hidden fees.</p>
+  </div>
+
+  <div class="toggle-row">
+    <span class="toggle-label active" id="lbl-monthly">Monthly</span>
+    <div class="toggle-track" id="billing-toggle" onclick="toggleBilling()">
+      <div class="toggle-thumb"></div>
+    </div>
+    <span class="toggle-label" id="lbl-annual">Annual</span>
+    <span class="save-badge" id="save-badge" style="opacity:0">Save 20%</span>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <span class="tier-badge badge-basic">Basic</span>
+      <div class="tier-name">Basic</div>
+      <div class="tier-desc">For musicians starting to build their booking pipeline.</div>
+      <div class="price-row">
+        <span class="price-amount" id="basic-price">$9.99</span>
+        <span class="price-period">/month</span>
+      </div>
+      <div class="price-annual" id="basic-annual">&nbsp;</div>
+      <div class="divider"></div>
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="check check-basic"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>
+            <div>15 EPK sends per month</div>
+            <div class="limit-note">Resets on your billing date</div>
+          </div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-basic"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Full venue database access</div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-basic"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Outreach tracking &amp; history</div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-basic"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Upload your own EPK</div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-basic"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Add private venues</div>
+        </li>
+      </ul>
+      <button class="cta-btn cta-basic" onclick="sendPrompt('Show me the Basic tier sign-up flow ↗')">Get started</button>
+    </div>
+
+    <div class="card featured">
+      <span class="tier-badge badge-popular">Most popular</span>
+      <div class="tier-name">Pro</div>
+      <div class="tier-desc">For working musicians who are actively pitching shows every week.</div>
+      <div class="price-row">
+        <span class="price-amount" id="pro-price">$19.99</span>
+        <span class="price-period">/month</span>
+      </div>
+      <div class="price-annual" id="pro-annual">&nbsp;</div>
+      <div class="divider"></div>
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="check check-pro"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><div>Unlimited EPK sends</div></div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-pro"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Full venue database access</div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-pro"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Outreach tracking &amp; history</div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-pro"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Upload your own EPK</div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-pro"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>EPK generator</div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-pro"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Follow-up reminders</div>
+        </li>
+        <li class="feature-item">
+          <span class="check check-pro"><svg fill="none" viewBox="0 0 10 10"><polyline points="2,5 4,7 8,3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>Add private venues</div>
+        </li>
+      </ul>
+      <button class="cta-btn cta-pro" onclick="sendPrompt('Show me the Pro tier sign-up flow ↗')">Get Pro</button>
+    </div>
+  </div>
+
+  <div class="footer-note">Cancel anytime · Secure billing via Stripe · All prices in USD</div>
+</div>
+
+<script>
+var isAnnual = false;
+function toggleBilling() {
+  isAnnual = !isAnnual;
+  var track = document.getElementById('billing-toggle');
+  track.classList.toggle('on', isAnnual);
+  document.getElementById('lbl-monthly').classList.toggle('active', !isAnnual);
+  document.getElementById('lbl-annual').classList.toggle('active', isAnnual);
+  document.getElementById('save-badge').style.opacity = isAnnual ? '1' : '0';
+  if (isAnnual) {
+    document.getElementById('basic-price').textContent = '$7.99';
+    document.getElementById('pro-price').textContent = '$15.99';
+    document.getElementById('basic-annual').textContent = 'Billed as $95.88/year';
+    document.getElementById('pro-annual').textContent = 'Billed as $191.88/year';
+  } else {
+    document.getElementById('basic-price').textContent = '$9.99';
+    document.getElementById('pro-price').textContent = '$19.99';
+    document.getElementById('basic-annual').innerHTML = '&nbsp;';
+    document.getElementById('pro-annual').innerHTML = '&nbsp;';
+  }
+}
+</script>
