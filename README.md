@@ -91,7 +91,7 @@ docs/mockups/        earlier HTML mockups (superseded by the brief)
 
 |  | Basic | Pro |
 | --- | --- | --- |
-| Monthly | $9.99 | $19.99 |
+| Monthly | $9.99 AUD | $19.99 AUD |
 | Annual (20% off) | $7.99/mo | $15.99/mo |
 | Venue database + map | ✓ | ✓ |
 | Booking emails | 15 / month | Unlimited |
@@ -104,7 +104,8 @@ docs/mockups/        earlier HTML mockups (superseded by the brief)
 Basic keeps the generator's **Biography** section even though the generator is a Pro feature:
 the booking email is written from its short bio, so locking it would break the core flow for
 a paying user. Limits live in one place (`plan()`, `can()`, `sendsRemaining()` in
-`src/store/store.js`).
+`src/store/store.js`). Prices are in **AUD** — `money()` in `src/lib/format.js` formats
+everything through `Intl.NumberFormat('en-AU')`, so changing currency is one line.
 
 ## Data
 

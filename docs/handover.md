@@ -42,7 +42,9 @@ rewritten — that logic was already proven, so only the presentation layer is n
 - Fonts are self-hosted, not loaded from Google, so the app works offline.
 
 **Product** (unchanged from earlier rounds):
-- Basic $9.99 (15 emails/month), Pro $19.99, 20% off annually.
+- Basic $9.99 AUD (15 emails/month), Pro $19.99 AUD, 20% off annually. The price points were
+  kept and re-denominated rather than converted from USD — they're chosen numbers, not a
+  conversion.
 - Basic keeps the EPK generator's Biography section, because the booking email is written
   from its short bio.
 - Venues added by a subscriber are either private, or submitted to the shared database for
@@ -59,7 +61,8 @@ rewritten — that logic was already proven, so only the presentation layer is n
    column mapping and de-duplicates on name + suburb).
 3. **Unadvertised Pro features.** Saved lists, CSV export and analytics work but aren't
    listed on the pricing cards, because the pricing mockup didn't list them.
-4. **Currency.** Prices are USD but the product is Melbourne-based. Probably should be AUD.
+4. **GST.** Prices are now AUD but say nothing about GST. Australian SaaS usually states
+   "incl. GST" — worth confirming with your accountant before the copy claims either way.
 5. **Onboarding, pricing, settings and admin weren't in the brief's scope list** — they follow
    the same design language, but they haven't been designed against a brief the way the four
    named screens were.

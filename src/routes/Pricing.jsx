@@ -9,7 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { money } from '@/lib/format';
+import { money, moneyAud } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export default function Pricing() {
@@ -68,7 +68,7 @@ export default function Pricing() {
                   </p>
                   <p className="mt-1 text-[0.72rem] text-paper-muted">
                     {annual
-                      ? `${money(annualTotal(id))} billed yearly — saves ${money(+(p.monthly * 12 - annualTotal(id)).toFixed(2))}`
+                      ? `${moneyAud(annualTotal(id))} billed yearly — saves ${money(+(p.monthly * 12 - annualTotal(id)).toFixed(2))}`
                       : `or ${money(p.annualMonthly)}/mo billed yearly`}
                   </p>
 
@@ -101,7 +101,7 @@ export default function Pricing() {
         </div>
 
         <p className="mt-6 text-center text-[0.78rem] text-bone-muted">
-          Cancel anytime · Secure billing via Stripe · All prices in USD
+          Cancel anytime · Secure billing via Stripe · All prices in AUD
         </p>
 
         <Card className="mt-6">

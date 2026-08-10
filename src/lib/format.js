@@ -2,8 +2,16 @@ export function uid(prefix = 'id') {
   return `${prefix}_${Math.random().toString(36).slice(2, 9)}${Date.now().toString(36).slice(-4)}`;
 }
 
+const AUD = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
+
+/** Prices are in Australian dollars — this is a Melbourne product. */
 export function money(n) {
-  return `$${Number(n).toFixed(2)}`;
+  return AUD.format(Number(n));
+}
+
+/** Explicit form for anywhere the actual charge is stated. */
+export function moneyAud(n) {
+  return `${AUD.format(Number(n))} AUD`;
 }
 
 export function fmtDate(iso) {

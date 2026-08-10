@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { MapPin, Send, Phone } from 'lucide-react';
-import { state, signUp, signIn } from '@/store/store';
+import { state, signUp, signIn, PLANS } from '@/store/store';
 import { activeVenues } from '@/store/store';
+import { money } from '@/lib/format';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,7 +86,7 @@ export default function Landing() {
 
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Stamp status="booked" seed="landing" size="lg" />
-            <p className="text-[0.78rem] text-bone-muted">Basic $9.99/mo · Pro $19.99/mo · 20% off annually</p>
+            <p className="text-[0.78rem] text-bone-muted">{`Basic ${money(PLANS.basic.monthly)}/mo · Pro ${money(PLANS.pro.monthly)}/mo · 20% off annually`}</p>
           </div>
         </div>
       </section>

@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Plus, Trash2, Send, X, Lock } from 'lucide-react';
-import { isPro, myLists, createList, deleteList, toggleListVenue, venueById, outreachForVenue } from '@/store/store';
+import { isPro, myLists, createList, deleteList, toggleListVenue, venueById, outreachForVenue, PLANS } from '@/store/store';
 import AppShell from '@/components/AppShell';
 import { Stamp } from '@/components/Stamp';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { plural } from '@/lib/format';
+import { plural, money } from '@/lib/format';
 
 export default function Lists() {
   if (!isPro()) {
@@ -18,7 +18,7 @@ export default function Lists() {
           <p className="mx-auto mt-2 max-w-sm text-[0.85rem] text-paper-muted">
             Group rooms into a run — "Regional, October" — and work the list without losing your place.
           </p>
-          <Button asChild className="mt-4"><Link to="/pricing">See Pro — $19.99/mo</Link></Button>
+          <Button asChild className="mt-4"><Link to="/pricing">See Pro — {money(PLANS.pro.monthly)}/mo</Link></Button>
         </CardContent></Card>
       </AppShell>
     );

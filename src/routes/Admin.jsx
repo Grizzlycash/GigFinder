@@ -189,7 +189,7 @@ function Overview() {
           ['Venues (active)', venues.filter((v) => v.status === 'active').length, `${venues.length} total rows`],
           ['Pending review', venues.filter((v) => v.status === 'pending').length, 'user submissions'],
           ['Subscribers', users.length, `${users.filter((u) => u.plan === 'pro').length} on Pro`],
-          ['Est. MRR', money(mrr), 'at current plans'],
+          ['Est. MRR (AUD)', money(mrr), 'at current plans'],
         ].map(([label, value, foot]) => (
           <div key={label} className="rounded-[3px] border border-ink-line bg-ink-raised px-4 py-3.5">
             <p className="eyebrow text-bone-muted/80">{label}</p>

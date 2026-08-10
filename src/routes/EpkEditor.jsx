@@ -5,7 +5,7 @@ import {
   User, Image as ImageIcon, Music, Globe, SlidersHorizontal, Check, Lock,
   Eye, ChevronLeft, ChevronRight, Plus, Trash2, Send, Upload,
 } from 'lucide-react';
-import { epkById, updateEpk, currentUser, normaliseEpk, epkProgress, can, isPro } from '@/store/store';
+import { epkById, updateEpk, currentUser, normaliseEpk, epkProgress, can, isPro, PLANS } from '@/store/store';
 import { ALL_GENRES } from '@/data/venues';
 import AppShell from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { uid } from '@/lib/format';
+import { uid, money } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const SECTIONS = [
@@ -151,7 +151,7 @@ export default function EpkEditor() {
                   <p className="mx-auto mt-2 max-w-sm text-[0.85rem] text-paper-muted">
                     Pro builds the full kit — photos, music links, socials and a tech rider — and keeps unlimited kits.
                   </p>
-                  <Button asChild className="mt-4"><Link to="/pricing">See Pro — $19.99/mo</Link></Button>
+                  <Button asChild className="mt-4"><Link to="/pricing">See Pro — {money(PLANS.pro.monthly)}/mo</Link></Button>
                 </CardContent>
               </Card>
             ) : (

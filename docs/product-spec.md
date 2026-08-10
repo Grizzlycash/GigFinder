@@ -153,7 +153,7 @@ access, and data controls (load sample pipeline, reset).
 
 | | Basic | Pro |
 | --- | --- | --- |
-| Monthly | $9.99 | $19.99 |
+| Monthly | $9.99 AUD | $19.99 AUD |
 | Annual | $7.99/mo ($95.88/yr) | $15.99/mo ($191.88/yr) |
 | Sends | 15/month | Unlimited |
 | Venue database, outreach tracking, upload your own EPK, private venues | ✓ | ✓ |
@@ -161,7 +161,7 @@ access, and data controls (load sample pipeline, reset).
 | EPKs | 1 | Unlimited |
 | Follow-up reminders, saved lists, CSV export, analytics | — | ✓ |
 
-Annual is a flat 20% discount on both tiers. A "send" is one EPK email to one booking contact,
+All prices are in Australian dollars. Annual is a flat 20% discount on both tiers. A "send" is one EPK email to one booking contact,
 follow-ups included; the Basic counter resets on the billing date.
 
 The pricing page lists the headline features above. Saved lists, CSV export and outreach
