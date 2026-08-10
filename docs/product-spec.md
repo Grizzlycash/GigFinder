@@ -20,14 +20,16 @@ from a proprietary spreadsheet. Subscribers can suggest additions, which enter a
 
 Sidebar navigation, two groups:
 
-**Booking** — Dashboard · Venues · Map · EPK · Outreach · Saved Lists (Pro)
-**Account** — Plan & Billing · Settings · (Admin panel, staff only)
+**Main** — Dashboard · Venues · Map · Outreach (badged with follow-ups due)
+**My profile** — My EPK · Saved Lists (Pro) · Settings
+
+Plan & billing and sign-out live in the account block at the foot of the sidebar.
 
 Venues and Map are **distinct navigation items**. A combined list/map view compromised both:
 the list wants density and filters, the map wants space and a single selection.
 
-The admin panel is a separate chrome with a **dark sidebar**, so it is never mistaken for the
-artist-facing app.
+The admin panel is a separate chrome with a **lighter steel sidebar and an amber rail**, so it
+is never mistaken for the artist-facing app.
 
 ## 3. Screens
 
@@ -49,32 +51,47 @@ everything else is collected in onboarding.
 Progress is a four-segment bar. Steps persist, so a dropped session resumes where it left off.
 
 ### 3.3 Dashboard
-Four stat tiles (sent, replies + rate, booked + rate, awaiting reply), monthly send quota with
-progress bar, follow-ups due (Pro; upsell on Basic), EPK status, suggested venues ranked by
-genre and geography, and a recent-activity timeline.
+Greeting in the top bar ("Good morning, Alex") with today's date and follow-ups due. Below: an
+EPK nudge when the press kit is unfinished, four metric tiles (EPKs sent, sends remaining,
+venues contacted, shows booked), recent outreach as tiled rows with pipeline badges, and a
+right-hand column of follow-up reminders (Pro; upsell on Basic), database coverage and a
+pipeline summary.
 
 ### 3.4 Venues
-Left filter rail: search, state, venue type, capacity range, genres booked, "hide venues I've
-contacted", clear-all. Right: sortable result cards showing capacity, type, pay structure,
-genres, and the artist's own pipeline stage for that venue as a coloured badge. Per-row
-actions: save to list (Pro), details, send EPK. Header carries CSV export (Pro) and
-"suggest a venue", which files into the admin review queue.
+A three-pane browser. Across the top: search, sort, CSV export (Pro) and "Add venue", then a
+chip bar filtering by pipeline status, genre and room size. Left: the venue list, each row an
+initials tile, name, city, capacity and the artist's own pipeline stage. Right: the detail
+pane for the selected venue.
 
-### 3.5 Venue detail
-Booking contact block (contact, email, submission method, pay structure, website), booking
-notes, genres, coordinates with a link through to the map, and the artist's own outreach with
-that venue: current stage (editable), private notes, and a full event history.
+Adding a venue offers two destinations — keep it **private** to the account (live
+immediately, marked in the list and counted in a "Private: n" badge) or **submit it to the
+shared database**, where it waits at status `pending` for admin review.
+
+### 3.5 Venue detail (the right-hand pane)
+Header with initials tile, name, location, pipeline badge and genre chips, plus Send EPK and
+Save to list (Pro). Below: venue details (capacity, type, pay structure, submission method,
+website), booking contact, and the artist's own outreach with that venue — editable stage,
+private notes and a full event history.
 
 ### 3.6 Map
-Pins for every mapped venue, coloured by pipeline stage against a shared legend. Pan, zoom,
-state filter, and a "not yet contacted" toggle. Selecting a pin opens a side panel with the
-venue summary and a send action; with nothing selected the panel lists the pins in view.
-Co-located venues are fanned apart so each stays clickable.
+Teardrop pins carrying the venue's initials, coloured by pipeline stage against a legend in the
+top-left corner; a chip bar filters by status and genre, and zoom controls sit bottom-right.
+Pan by dragging, zoom by wheel or button. Selecting a pin opens a side panel with the venue
+summary, booking contact, the four nearest venues by distance, and a send action; with nothing
+selected the panel prompts for a selection. Co-located venues are fanned apart so each stays
+clickable.
 
 ### 3.7 EPK generator
-List of press kits (one on Basic, unlimited on Pro) with a default marker. The editor is a
-two-column layout: form on the left — basics, short bio, long bio, tracks, press quotes,
-links — and a live press-kit preview on the right that updates as you type.
+List of press kits (one on Basic, unlimited on Pro) with a default marker and a completion
+bar. The editor is a section rail plus a form: **Biography, Photos, Music links, Social
+media, Tech rider**, each showing a completion tick, over a progress bar reading "n of 5
+sections complete". A bottom bar carries Previous / Next: <section> and Preview EPK opens the
+assembled kit.
+
+The generator is a Pro feature, with one deliberate exception: **Biography stays on Basic**,
+because the outreach email is written from its short bio and locking it would break the core
+flow for a paying Basic user. Basic sees the other four sections locked behind an upgrade
+panel and can attach a press kit built elsewhere instead.
 
 ### 3.8 Send EPK — the core flow
 **One linear column, top to bottom, six numbered steps.** No tabs, no wizard, no modal.
@@ -106,7 +123,7 @@ the cash saved. Pro is visually featured. Downgrading warns which features switc
 Profile, outreach defaults (subject template, signature, reminder interval — Pro), admin
 access, and data controls (load sample pipeline, reset).
 
-### 3.12 Admin panel (dark sidebar)
+### 3.12 Admin panel (steel sidebar)
 - **Overview** — venue counts, pending submissions, subscribers, estimated MRR, coverage by
   state, and a database-health table (missing emails, coordinates, capacity).
 - **Venue database** — searchable table over every row with full editor, add and delete.
@@ -121,9 +138,10 @@ access, and data controls (load sample pipeline, reset).
   plan, cycle, admin flag, onboarding step
 - **Venue** — name, city, state, coordinates, capacity, type, genres, booking contact, email,
   website, submission method, pay structure, notes, status (active / pending / archived),
-  source
-- **EPK** — title, tagline, short bio, long bio, genres, base city, links, tracks, press
-  quotes, photo, default flag
+  visibility (shared / private), owner, source
+- **EPK** — title, tagline, short bio, long bio, notable performances, genres, base city, set
+  length, audience size, music links, social links, tech rider, photos, tracks, press quotes,
+  uploaded file, default flag
 - **Outreach** — venue, EPK, recipient, subject, body copy, stage, sent date, follow-up date,
   notes, history entries
 - **List** (Pro) — name, venue ids
@@ -134,15 +152,28 @@ access, and data controls (load sample pipeline, reset).
 | --- | --- | --- |
 | Monthly | $9.99 | $19.99 |
 | Annual | $7.99/mo ($95.88/yr) | $15.99/mo ($191.88/yr) |
+| Sends | 15/month | Unlimited |
+| Venue database, outreach tracking, upload your own EPK, private venues | ✓ | ✓ |
+| EPK generator | Biography only | Full |
 | EPKs | 1 | Unlimited |
-| Sends | 25/month | Unlimited |
 | Follow-up reminders, saved lists, CSV export, analytics | — | ✓ |
 
 Annual is a flat 20% discount on both tiers. A "send" is one EPK email to one booking contact,
-follow-ups included; the Basic counter resets on the 1st.
+follow-ups included; the Basic counter resets on the billing date.
+
+The pricing page lists the headline features above. Saved lists, CSV export and outreach
+analytics also ship as Pro capabilities but are not advertised on the cards — worth deciding
+whether to surface them there.
 
 ## 6. Design system
 
-Brand `#1D9E75`. Arial, two weights only (400/700). Flat UI — no gradients, borders rather
-than shadows. Pipeline colours are fixed across every surface: sent blue, opened amber,
-replied purple, booked brand green, declined red.
+Dark theme in blue and grey. Cool slate surfaces (`#0D131E` frame, `#151C2A` cards, `#1A2231`
+sidebar), a `#2F6BD8` primary action, and `#7FB0FF` for links and active navigation. Arial,
+two weights only (400/700). Flat UI — no gradients, hairline borders rather than shadows.
+
+Pipeline colours are fixed across every surface (board, venue list, map): sent amber, opened
+cyan, replied violet, booked green, declined red. Venue initials tiles hash the venue name to
+one of six muted swatches so a venue keeps its colour everywhere.
+
+The admin panel is set apart by contrast direction: where the artist app is dark slate, admin
+uses a lighter steel sidebar with an amber rail.

@@ -23,25 +23,28 @@ module imports over `file://`.
 | --- | --- | --- |
 | Landing / sign in | `#/` | Split hero + create-account form |
 | Onboarding | `#/onboarding` | Four steps: profile → links & photo → EPK bio → plan |
-| Dashboard | `#/dashboard` | Pipeline snapshot, follow-ups, suggested venues |
-| Venues | `#/venues` | Search, filters, sort, CSV export, "suggest a venue" |
-| Venue detail | `#/venues/:id` | Booking contact, notes, your outreach history |
+| Dashboard | `#/dashboard` | Greeting, metrics, recent outreach, follow-ups, coverage |
+| Venues | `#/venues`, `#/venues/:id` | Chip filter bar, venue list column, detail pane |
 | Map | `#/map` | Separate nav item from Venues; pins coloured by pipeline stage |
-| EPK | `#/epk`, `#/epk/:id` | Generator with live press-kit preview |
+| EPK generator | `#/epk`, `#/epk/:id` | Section rail: bio, photos, music, socials, tech rider |
 | Send EPK | `#/send` | Linear six-step flow, body auto-filled from the EPK short bio |
 | Outreach tracker | `#/outreach` | Drag-and-drop board or table, notes, history |
 | Saved lists | `#/lists` | Pro — route a run of dates |
 | Plan & billing | `#/pricing` | Basic / Pro, monthly / annual |
 | Settings | `#/settings` | Profile, outreach defaults, data controls |
-| Admin panel | `#/admin/*` | Dark sidebar — venue DB, spreadsheet import, submissions, users |
+| Admin panel | `#/admin/*` | Steel sidebar — venue DB, spreadsheet import, submissions, users |
 
-### Three design decisions the build follows
+### Four design decisions the build follows
 
 - **The send flow is linear, top to bottom.** One column, six numbered steps, no tabs or
   modals. The email body is generated from the selected EPK's short bio on load, so every
   pitch reads consistently and the artist only edits when they want to.
-- **The admin panel uses a dark sidebar.** It should never be mistaken for the artist app.
 - **Map and Venues are separate nav items.** A combined view made both jobs worse.
+- **Venues is a three-pane browser** — filter chips across the top, a list column, and a
+  detail pane — so filtering and reading a venue never cost a page change.
+- **The admin panel is visually distinct.** It originally did this with a dark sidebar; now
+  that the whole app is dark, admin uses a *lighter* steel sidebar with an amber rail. Same
+  job: you can never mistake it for the artist-facing app.
 
 ## Subscription tiers
 
@@ -50,13 +53,21 @@ module imports over `file://`.
 | Monthly | $9.99 | $19.99 |
 | Annual (20% off) | $7.99/mo — $95.88/yr | $15.99/mo — $191.88/yr |
 | Venue database + map | ✓ | ✓ |
-| EPKs | 1 | Unlimited |
-| EPK sends | 25 / month | Unlimited |
+| EPK sends | 15 / month | Unlimited |
 | Outreach tracker | ✓ | ✓ |
+| Upload your own EPK | ✓ | ✓ |
+| Add private venues | ✓ | ✓ |
+| EPK generator | Bio only | Full — photos, music, socials, rider |
+| EPKs | 1 | Unlimited |
 | Follow-up reminders | — | ✓ |
 | Saved venue lists | — | ✓ |
 | CSV export | — | ✓ |
 | Outreach analytics | — | ✓ |
+
+Basic keeps the **Biography** section of the generator even though the generator is a Pro
+feature: the outreach email is written from its short bio, so locking it would break the
+core flow for paying Basic users. Everything else in the generator is Pro, and Basic can
+attach a press kit built elsewhere instead.
 
 Gating is enforced in `assets/js/store.js` (`plan()`, `can()`, `sendsRemaining()`), so the
 tier boundary lives in one place. Switching plans on `#/pricing` swaps the feature set
@@ -97,11 +108,19 @@ Sample pipeline data is available from Settings → Data, or the empty state of 
 
 ## Design system
 
-- Brand `#1D9E75`; full token set in `assets/css/tokens.css`
+Dark theme, blue and grey. The full token set is in `assets/css/tokens.css` — change the
+palette there and the whole app follows.
+
+- **Surfaces**: cool slate greys, deepest at the app frame — `#0D131E` background,
+  `#151C2A` cards, `#1A2231` sidebar and inset areas
+- **Primary action**: `#2F6BD8` (white label, ~5:1 contrast); `#7FB0FF` for links and
+  active nav on dark surfaces
 - Arial, **two weights only** (400 and 700) — nothing uses 500/600
-- Flat UI: no gradients anywhere, borders instead of shadows
-- Pipeline colours: sent (blue), opened (amber), replied (purple), booked (brand green),
-  declined (red) — used identically on the board, the venue list and the map
+- Flat UI: no gradients anywhere, hairline borders instead of shadows
+- **Pipeline colours** (dark-tuned, used identically on the board, venue list and map):
+  sent amber, opened cyan, replied violet, booked green, declined red
+- **Initials tiles** hash a venue's name to one of six muted swatches, so a venue keeps the
+  same colour everywhere it appears
 
 ## Known prototype boundaries
 

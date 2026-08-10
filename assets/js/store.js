@@ -13,18 +13,19 @@ export const PLANS = {
     name: 'Basic',
     monthly: 9.99,
     annualMonthly: 7.99, // 20% off
-    blurb: 'Everything you need to start booking shows yourself.',
+    blurb: 'For musicians starting to build their booking pipeline.',
     features: [
-      'Full shared venue database',
-      'Map view with venue pins',
-      '1 Electronic Press Kit',
-      '25 EPK sends per month',
-      'Outreach tracker (5-stage pipeline)',
+      { label: '15 EPK sends per month', note: 'Resets on your billing date' },
+      { label: 'Full venue database access' },
+      { label: 'Outreach tracking & history' },
+      { label: 'Upload your own EPK' },
+      { label: 'Add private venues' },
     ],
-    missing: ['Unlimited EPK sends', 'Multiple EPKs', 'Follow-up reminders', 'Saved venue lists', 'CSV export', 'Outreach analytics'],
     limits: {
       epks: 1,
-      sendsPerMonth: 25,
+      sendsPerMonth: 15,
+      epkGenerator: false,
+      privateVenues: true,
       savedLists: 0,
       followUps: false,
       csvExport: false,
@@ -36,20 +37,21 @@ export const PLANS = {
     name: 'Pro',
     monthly: 19.99,
     annualMonthly: 15.99, // 20% off
-    blurb: 'For working artists running outreach at tour scale.',
+    blurb: 'For working musicians who are actively pitching shows every week.',
     features: [
-      'Everything in Basic',
-      'Unlimited EPK sends',
-      'Unlimited EPKs (one per project or single)',
-      'Follow-up reminders',
-      'Saved venue lists for routing tours',
-      'CSV export of venues and outreach',
-      'Outreach analytics (reply and booking rates)',
+      { label: 'Unlimited EPK sends' },
+      { label: 'Full venue database access' },
+      { label: 'Outreach tracking & history' },
+      { label: 'Upload your own EPK' },
+      { label: 'EPK generator' },
+      { label: 'Follow-up reminders' },
+      { label: 'Add private venues' },
     ],
-    missing: [],
     limits: {
       epks: Infinity,
       sendsPerMonth: Infinity,
+      epkGenerator: true,
+      privateVenues: true,
       savedLists: Infinity,
       followUps: true,
       csvExport: true,
@@ -225,9 +227,22 @@ export function sendsRemaining() {
   return Math.max(0, cap - sendsThisMonth());
 }
 
-/* ---------- Venues ---------- */
+/* ---------- Venues ----------
+   The shared database plus this artist's own private venues. Private venues never
+   leak between accounts; venues submitted to the shared database sit at status
+   'pending' until an admin approves them. */
 export function activeVenues() {
-  return state.venues.filter((v) => v.status === 'active');
+  const me = currentUser()?.id;
+  return state.venues.filter((v) => {
+    if (v.status !== 'active') return false;
+    if (v.visibility === 'private') return v.ownerId === me;
+    return true;
+  });
+}
+
+export function myPrivateVenues() {
+  const me = currentUser()?.id;
+  return state.venues.filter((v) => v.visibility === 'private' && v.ownerId === me);
 }
 
 export function venueById(id) {
@@ -241,8 +256,11 @@ export function upsertVenue(venue) {
   save();
 }
 
-export function suggestVenue(data) {
+// visibility: 'private' keeps the venue to this account (live immediately);
+// 'shared' submits it to the master database for admin review.
+export function addVenue(data, visibility = 'private') {
   const user = currentUser();
+  const shared = visibility === 'shared';
   const venue = {
     id: uid('ven'),
     name: '', city: '', state: '', country: 'USA',
@@ -250,8 +268,10 @@ export function suggestVenue(data) {
     contactName: '', contactEmail: '', phone: '', website: '',
     submissionMethod: 'Email', payType: '', notes: '',
     ...data,
-    status: 'pending',
-    source: `submitted by ${user?.email || 'a subscriber'}`,
+    visibility: shared ? 'shared' : 'private',
+    ownerId: shared ? null : user?.id || null,
+    status: shared ? 'pending' : 'active',
+    source: shared ? `submitted by ${user?.email || 'a subscriber'}` : `private · ${user?.email || ''}`,
     addedAt: new Date().toISOString(),
   };
   state.venues.push(venue);
@@ -275,8 +295,11 @@ export function epkById(id) {
   return state.epks.find((e) => e.id === id) || null;
 }
 
+export const EPK_SECTIONS = ['bio', 'photos', 'music', 'socials', 'rider'];
+
 export function createEpk(data = {}) {
   const user = currentUser();
+  const links = user.links || {};
   const epk = {
     id: uid('epk'),
     userId: user.id,
@@ -284,12 +307,18 @@ export function createEpk(data = {}) {
     tagline: '',
     shortBio: '',
     longBio: '',
+    notable: '',
     genres: user.genres || [],
     homeCity: [user.homeCity, user.homeState].filter(Boolean).join(', '),
-    links: { ...user.links },
+    setLength: '60 minutes',
+    audienceSize: user.drawSize || '50–150',
+    music: { spotify: links.spotify || '', soundcloud: '', appleMusic: '', youtube: links.youtube || '', bandcamp: links.bandcamp || '' },
+    socials: { instagram: links.instagram || '', facebook: '', tiktok: '', x: '', website: links.website || '' },
+    rider: { format: 'Solo acoustic', pa: 'Yes — venue to provide', mics: '', di: '', monitors: '', setupTime: '30 minutes', notes: '', hospitality: '' },
+    photos: user.photo ? [{ id: uid('img'), src: user.photo, label: 'Cover photo' }] : [],
     tracks: [],
     pressQuotes: [],
-    photo: user.photo || '',
+    uploadedFile: null, // Basic tier: attach a press kit made elsewhere
     isDefault: state.epks.filter((e) => e.userId === user.id).length === 0,
     updatedAt: new Date().toISOString(),
     ...data,
@@ -297,6 +326,36 @@ export function createEpk(data = {}) {
   state.epks.push(epk);
   save();
   return epk;
+}
+
+// Older EPKs (and imported ones) may predate the sectioned model.
+export function normaliseEpk(epk) {
+  if (!epk) return epk;
+  const legacy = epk.links || {};
+  epk.music = { spotify: '', soundcloud: '', appleMusic: '', youtube: '', bandcamp: '', ...legacy, ...(epk.music || {}) };
+  epk.socials = { instagram: '', facebook: '', tiktok: '', x: '', website: '', ...(epk.socials || {}) };
+  epk.rider = { format: '', pa: '', mics: '', di: '', monitors: '', setupTime: '', notes: '', hospitality: '', ...(epk.rider || {}) };
+  epk.photos = epk.photos || (epk.photo ? [{ id: uid('img'), src: epk.photo, label: 'Cover photo' }] : []);
+  epk.tracks = epk.tracks || [];
+  epk.pressQuotes = epk.pressQuotes || [];
+  epk.notable = epk.notable || '';
+  return epk;
+}
+
+// Which of the five generator sections have real content in them.
+export function epkProgress(epk) {
+  if (!epk) return { done: [], count: 0, total: EPK_SECTIONS.length };
+  const e = normaliseEpk(epk);
+  const done = {
+    bio: Boolean(e.shortBio && e.shortBio.trim().length > 20),
+    photos: (e.photos || []).length > 0,
+    music: Object.values(e.music).some(Boolean) || (e.tracks || []).some((t) => t.url),
+    socials: Object.values(e.socials).some(Boolean),
+    // format/pa ship with defaults, so they alone don't count as filled in.
+    rider: Boolean(e.rider.format && e.rider.pa
+      && (e.rider.mics || e.rider.di || e.rider.monitors || e.rider.notes || e.rider.hospitality)),
+  };
+  return { done, count: Object.values(done).filter(Boolean).length, total: EPK_SECTIONS.length };
 }
 
 export function updateEpk(id, patch) {

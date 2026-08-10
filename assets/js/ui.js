@@ -51,7 +51,23 @@ const PATHS = {
   menu: '<path d="M3 5.5h14M3 10h14M3 14.5h14"/>',
   logout: '<path d="M8 17H4.5A1.5 1.5 0 0 1 3 15.5v-11A1.5 1.5 0 0 1 4.5 3H8"/><path d="M12.5 13.5 17 10l-4.5-3.5"/><path d="M17 10H7.5"/>',
   music: '<path d="M8 15.5V5l8-1.5V14"/><ellipse cx="5.7" cy="15.3" rx="2.3" ry="2"/><ellipse cx="13.7" cy="13.8" rx="2.3" ry="2"/>',
+  phone: '<path d="M17.5 14.2v2.3a1.5 1.5 0 0 1-1.7 1.5 15 15 0 0 1-6.5-2.4 14.8 14.8 0 0 1-4.5-4.5A15 15 0 0 1 2.4 4.6 1.5 1.5 0 0 1 3.9 3h2.3a1.5 1.5 0 0 1 1.5 1.3c.1.7.3 1.4.5 2.1a1.5 1.5 0 0 1-.3 1.6L7 9a11.5 11.5 0 0 0 4.5 4.5l1-1a1.5 1.5 0 0 1 1.6-.3c.7.2 1.4.4 2.1.5a1.5 1.5 0 0 1 1.3 1.5Z"/>',
+  user: '<path d="M16.5 17.5v-1.7a3.3 3.3 0 0 0-3.3-3.3H6.8a3.3 3.3 0 0 0-3.3 3.3v1.7"/><circle cx="10" cy="6.3" r="3.3"/>',
+  image: '<rect x="2.5" y="3.5" width="15" height="13" rx="2"/><circle cx="7" cy="8" r="1.3"/><path d="m17.5 13-4-4-8 7.5"/>',
+  sliders: '<path d="M9.5 4.5 5.5 7.8H2.5v4.4h3l4 3.3V4.5Z"/><path d="M13.3 7.5a4 4 0 0 1 0 5.6M15.8 5a7.5 7.5 0 0 1 0 10.6"/>',
+  eye: '<path d="M1.5 10s3.2-6 8.5-6 8.5 6 8.5 6-3.2 6-8.5 6-8.5-6-8.5-6Z"/><circle cx="10" cy="10" r="2.4"/>',
+  globe: '<circle cx="10" cy="10" r="7.5"/><path d="M2.5 10h15"/><path d="M10 2.5a12 12 0 0 1 3 7.5 12 12 0 0 1-3 7.5 12 12 0 0 1-3-7.5 12 12 0 0 1 3-7.5Z"/>',
+  minus: '<path d="M4 10h12"/>',
+  target: '<circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="2.6"/><path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2"/>',
 };
+
+/* Deterministic tile colour so a venue keeps the same swatch everywhere. */
+export function tileClass(seed) {
+  const text = String(seed || '');
+  let hash = 0;
+  for (let i = 0; i < text.length; i += 1) hash = (hash * 31 + text.charCodeAt(i)) % 997;
+  return `t${(hash % 6) + 1}`;
+}
 
 export function icon(name, cls = '') {
   const body = PATHS[name] || PATHS.doc;
@@ -110,6 +126,8 @@ export function toast(message, kind = '') {
   node.className = `toast ${kind ? `toast-${kind}` : ''}`;
   node.textContent = message;
   root.appendChild(node);
+  // Keep the stack short — a run of quick actions shouldn't paper over the UI.
+  while (root.children.length > 3) root.firstElementChild.remove();
   setTimeout(() => node.remove(), 3600);
 }
 

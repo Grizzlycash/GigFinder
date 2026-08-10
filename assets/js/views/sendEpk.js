@@ -3,9 +3,9 @@
 
 import {
   activeVenues, venueById, myEpks, defaultEpk, epkById, currentUser, state,
-  recordSend, outreachForVenue, sendsRemaining, plan, isPro,
+  recordSend, outreachForVenue, sendsRemaining, plan, isPro, normaliseEpk,
 } from '../store.js';
-import { esc, icon, toast, relTime } from '../ui.js';
+import { esc, icon, toast, relTime, tileClass, initials } from '../ui.js';
 
 function firstName(name) {
   return String(name || '').trim().split(/\s+/)[0] || 'there';
@@ -19,6 +19,7 @@ export function fillTemplate(template, { user, venue }) {
 }
 
 export function composeBody({ user, venue, epk, settings }) {
+  const music = epk?.music || {};
   const lines = [];
   lines.push(`Hi ${firstName(venue?.contactName)},`);
   lines.push('');
@@ -28,11 +29,12 @@ export function composeBody({ user, venue, epk, settings }) {
   const tracks = (epk?.tracks || []).filter((t) => t.url).slice(0, 2);
   if (tracks.length) {
     tracks.forEach((t) => lines.push(`${t.title || 'Listen'}: ${t.url}`));
-  } else if (epk?.links?.spotify) {
-    lines.push(`Listen: ${epk.links.spotify}`);
+  } else {
+    const primary = music.spotify || music.bandcamp || music.soundcloud || music.appleMusic;
+    if (primary) lines.push(`Listen: ${primary}`);
   }
 
-  if (epk?.links?.youtube) lines.push(`Live video: ${epk.links.youtube}`);
+  if (music.youtube) lines.push(`Live video: ${music.youtube}`);
   lines.push('');
   lines.push(`I'd love to be considered for a date at ${venue?.name || 'your venue'}. Full EPK, photos and press are attached below.`);
   lines.push('');
@@ -53,7 +55,7 @@ export default {
     const venueId = ctx.query.get('venue') || venues[0]?.id || '';
     const epkId = ctx.query.get('epk') || defaultEpk()?.id || '';
     const venue = venueById(venueId);
-    const epk = epkById(epkId);
+    const epk = normaliseEpk(epkById(epkId));
     const remaining = sendsRemaining();
     const prior = venue ? outreachForVenue(venue.id) : null;
 
@@ -141,11 +143,17 @@ export default {
             <span class="send-step-num">6</span>
             <div><div class="send-step-title">Attached press kit</div><div class="send-step-sub">What the venue receives alongside your message.</div></div>
           </div>
-          <div class="card card-tight" style="background:var(--surface-2)">
-            <div class="row-between">
-              <div>
-                <strong>${esc(epk?.title || '')}</strong>
-                <div class="small muted">${esc(epk?.tagline || 'No tagline')} · ${(epk?.tracks || []).length} track(s) · ${(epk?.pressQuotes || []).length} press quote(s)</div>
+          <div class="card card-tight">
+            <div class="row" style="gap:11px">
+              <span class="tile ${tileClass(epk?.title)}">${
+                epk?.photos?.[0] ? `<img src="${esc(epk.photos[0].src)}" alt="">` : esc(initials(epk?.title || 'EPK'))
+              }</span>
+              <div class="grow" style="min-width:0">
+                <strong class="truncate" style="display:block">${esc(epk?.title || '')}</strong>
+                <div class="small muted">${esc(epk?.tagline || 'No tagline')}</div>
+                <div class="xs muted">${(epk?.photos || []).length} photo(s) · ${(epk?.tracks || []).length} track(s) · ${(epk?.pressQuotes || []).length} press quote(s)${
+                  epk?.uploadedFile ? ` · ${esc(epk.uploadedFile.name)}` : ''
+                }</div>
               </div>
               <a class="btn btn-sm" href="#/epk/${esc(epk?.id || '')}">${icon('edit')} Edit EPK</a>
             </div>

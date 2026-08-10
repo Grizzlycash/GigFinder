@@ -1,62 +1,83 @@
-/* GigBook design system tokens.
-   Brand: #1D9E75 · Typography: Arial, two weights (400 / 700) · Flat UI, no gradients. */
+/* GigBook design system tokens — dark theme, blue and grey.
+   Typography: Arial, two weights (400 / 700). Flat UI, no gradients. */
 
 :root {
-  /* Brand */
-  --brand: #1D9E75;
-  --brand-dark: #17805E;
-  --brand-darker: #12634A;
-  --brand-tint: #E9F5F1;
-  --brand-tint-strong: #CFE9E0;
+  /* ---- Surfaces: cool slate greys, deepest at the app frame ---- */
+  --bg: #0D131E;          /* app background */
+  --surface: #151C2A;     /* cards, panels, topbar */
+  --surface-2: #1A2231;   /* sidebar, inset areas, table headers */
+  --surface-3: #212B3D;   /* hover */
+  --surface-4: #27334A;   /* pressed / selected */
 
-  /* Ink */
-  --ink: #101614;
-  --ink-2: #38443F;
-  --ink-3: #6B7A74;
-  --ink-4: #9AA7A2;
+  /* ---- Hairlines ---- */
+  --line: #253044;
+  --line-strong: #33415C;
 
-  /* Surfaces */
-  --bg: #F5F7F6;
-  --surface: #FFFFFF;
-  --surface-2: #FAFBFB;
-  --line: #E1E7E4;
-  --line-strong: #C9D3CF;
+  /* ---- Text ---- */
+  --ink: #E9EFF8;
+  --ink-2: #AEBBD0;
+  --ink-3: #7D8CA4;
+  --ink-4: #5D6B84;
 
-  /* Admin (dark sidebar keeps the admin panel visually distinct) */
-  --admin-bg: #10201B;
-  --admin-bg-2: #16302700;
-  --admin-line: #1F3830;
-  --admin-ink: #E7F0EC;
-  --admin-ink-2: #9FB5AC;
+  /* ---- Primary action (blue) ---- */
+  --brand: #2F6BD8;
+  --brand-hover: #3D7BF0;
+  --brand-active: #2559B8;
+  --brand-fg: #FFFFFF;
+  --brand-text: #7FB0FF;   /* links and active nav on dark surfaces */
+  --brand-tint: #16233C;   /* filled backgrounds */
+  --brand-tint-2: #1D3157;
+  --brand-line: #2E4977;
 
-  /* Pipeline status colours */
-  --st-none: #6B7A74;
-  --st-sent: #2F6FE4;
-  --st-opened: #C97A05;
-  --st-replied: #7C4DBC;
-  --st-booked: #1D9E75;
-  --st-declined: #C0392B;
+  /* ---- Pipeline status ---- */
+  --st-none: #8A98AE;      --st-none-bg: #1E2637;
+  --st-sent: #E2A33F;      --st-sent-bg: #2B2314;
+  --st-opened: #55B8D6;    --st-opened-bg: #12272E;
+  --st-replied: #A08BF5;   --st-replied-bg: #211E3A;
+  --st-booked: #35C08A;    --st-booked-bg: #0F2A22;
+  --st-declined: #F0736A;  --st-declined-bg: #301918;
 
-  /* Feedback */
-  --danger: #C0392B;
-  --danger-tint: #FBEDEB;
-  --warn: #C97A05;
-  --warn-tint: #FDF3E4;
-  --info-tint: #ECF2FD;
+  /* ---- Feedback ---- */
+  --good: #35C08A;
+  --warn: #E2A33F;         --warn-bg: #2B2314;
+  --danger: #F0736A;       --danger-bg: #301918;
 
-  /* Metrics */
-  --radius: 6px;
-  --radius-lg: 10px;
-  --sidebar-w: 232px;
-  --topbar-h: 60px;
-  --maxw: 1180px;
+  /* ---- Initials tiles (venue / contact avatars) ---- */
+  --tile-1: #1D3157;  --tile-1-fg: #9CC2FF;
+  --tile-2: #123029;  --tile-2-fg: #6ED4A9;
+  --tile-3: #2E2513;  --tile-3-fg: #E8BC6C;
+  --tile-4: #26203F;  --tile-4-fg: #B7A6FF;
+  --tile-5: #123039;  --tile-5-fg: #77CFE8;
+  --tile-6: #331E1D;  --tile-6-fg: #F0968E;
 
-  /* Type scale */
+  /* ---- Admin chrome (steel, amber rail — the whole app is dark now,
+          so admin is set apart by being lighter, not darker) ---- */
+  --admin-bg: #232E3F;
+  --admin-bg-2: #2A3648;
+  --admin-line: #37455D;
+  --admin-ink: #E9EFF8;
+  --admin-ink-2: #9FAEC6;
+  --admin-accent: #E2A33F;
+
+  /* ---- Metrics ---- */
+  --r-sm: 7px;
+  --r: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-pill: 20px;
+
+  --sidebar-w: 210px;
+  --topbar-h: 58px;
+  --maxw: 1220px;
+
+  /* ---- Type scale (compact, matching the mockups) ---- */
+  --fs-2xs: 10px;
   --fs-xs: 11px;
   --fs-sm: 12px;
-  --fs-base: 14px;
-  --fs-md: 16px;
-  --fs-lg: 20px;
-  --fs-xl: 26px;
-  --fs-2xl: 32px;
+  --fs-base: 13px;
+  --fs-md: 15px;
+  --fs-lg: 17px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
 }

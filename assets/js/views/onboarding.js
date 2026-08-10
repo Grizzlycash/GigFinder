@@ -74,7 +74,7 @@ function step2(user) {
       <div class="field span-2">
         <span class="label">Press photo</span>
         <div class="row">
-          <div class="avatar avatar-lg" data-photo-preview>${user.photo ? `<img src="${esc(user.photo)}" alt="">` : icon('music', 'icon-lg')}</div>
+          <div class="tile tile-lg tile-round t1" data-photo-preview>${user.photo ? `<img src="${esc(user.photo)}" alt="">` : icon('music', 'icon-lg')}</div>
           <div>
             <input type="file" id="ob-photo" accept="image/*" class="hidden" data-photo>
             <label class="btn btn-sm" for="ob-photo">${icon('upload')} Upload photo</label>
@@ -120,10 +120,10 @@ function planCard(id, cycle, selected) {
         </div>
         ${id === 'pro' ? '<span class="badge badge-pro">MOST POPULAR</span>' : ''}
       </div>
-      <div class="price-amount" style="margin-top:10px">${money(price)}<span class="muted" style="font-size:14px;font-weight:400">/mo</span></div>
+      <div class="price-amount" style="margin-top:10px">${money(price)}<span class="muted" style="font-size:13px;font-weight:400">/mo</span></div>
       <div class="small muted">${cycle === 'annual' ? `${money(annualTotal(id))} billed yearly` : 'Billed monthly'}</div>
       <ul class="price-list">
-        ${p.features.map((f) => `<li>${icon('check')}<span>${esc(f)}</span></li>`).join('')}
+        ${p.features.map((f) => `<li><span class="price-check ${id === 'pro' ? 'on' : ''}">${icon('check')}</span><span>${esc(f.label)}</span></li>`).join('')}
       </ul>
     </label>`;
 }
@@ -295,8 +295,6 @@ export default {
             longBio: u.longBio || '',
             genres: u.genres,
             homeCity: [u.homeCity, u.homeState].filter(Boolean).join(', '),
-            links: u.links,
-            photo: u.photo,
           });
         }
         toast(`You're on ${chosenPlan === 'pro' ? 'Pro' : 'Basic'}. Let's find you some shows.`, 'good');

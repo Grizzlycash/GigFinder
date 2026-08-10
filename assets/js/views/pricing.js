@@ -1,74 +1,96 @@
-// Plan & billing — Basic / Pro with a 20% annual discount.
+// Plan & billing — Basic / Pro, monthly or annual (20% off).
 
 import { PLANS, planPrice, annualTotal, currentUser, updateUser, ANNUAL_DISCOUNT } from '../store.js';
 import { esc, icon, money, toast, confirmModal } from '../ui.js';
 
+function card(id, cycle, currentPlan) {
+  const p = PLANS[id];
+  const current = currentPlan === id;
+  const featured = id === 'pro';
+  return `
+    <div class="price-card ${featured ? 'featured' : ''}">
+      <div class="row-between">
+        <span class="badge ${current ? 'badge-brand' : featured ? 'badge-pro' : ''}">${
+          current ? 'CURRENT PLAN' : featured ? 'MOST POPULAR' : esc(p.name.toUpperCase())
+        }</span>
+      </div>
+      <h2 style="margin:14px 0 4px">${esc(p.name)}</h2>
+      <p class="small muted" style="margin:0 0 16px">${esc(p.blurb)}</p>
+
+      <div class="row" style="align-items:baseline;gap:5px">
+        <span class="price-amount">${money(planPrice(id, cycle))}</span>
+        <span class="small muted">/month</span>
+      </div>
+      <div class="price-note">${cycle === 'annual'
+        ? `Billed as ${money(annualTotal(id))}/year — saves ${money(+(p.monthly * 12 - annualTotal(id)).toFixed(2))}`
+        : `or ${money(p.annualMonthly)}/mo billed annually`}</div>
+
+      <ul class="price-list">
+        ${p.features.map((f) => `
+          <li>
+            <span class="price-check ${featured ? 'on' : ''}">${icon('check')}</span>
+            <span>${esc(f.label)}${f.note ? `<span class="price-note" style="display:block">${esc(f.note)}</span>` : ''}</span>
+          </li>`).join('')}
+      </ul>
+
+      <button class="btn ${featured ? 'btn-primary' : ''} btn-lg btn-block" style="margin-top:20px" data-choose="${id}" ${current ? 'disabled' : ''}>
+        ${current ? 'Current plan' : featured ? 'Get Pro' : 'Switch to Basic'}
+      </button>
+    </div>`;
+}
+
 export default {
   title: 'Plan & Billing',
+
+  topbar() {
+    const user = currentUser();
+    return { title: 'Plan & billing', sub: `${esc(PLANS[user.plan].name)} · billed ${esc(user.cycle === 'annual' ? 'annually' : 'monthly')}` };
+  },
 
   render() {
     const user = currentUser();
     const cycle = user.cycle || 'monthly';
 
-    const card = (id) => {
-      const p = PLANS[id];
-      const current = user.plan === id;
-      const saving = +(p.monthly * 12 - annualTotal(id)).toFixed(2);
-      return `
-        <div class="price-card ${id === 'pro' ? 'featured' : ''}">
-          <div class="row-between">
-            <h2 style="margin:0">${esc(p.name)}</h2>
-            ${current ? '<span class="badge badge-brand">CURRENT PLAN</span>' : id === 'pro' ? '<span class="badge badge-pro">MOST POPULAR</span>' : ''}
-          </div>
-          <p class="muted small" style="margin-top:4px">${esc(p.blurb)}</p>
-          <div class="price-amount" style="margin-top:14px">${money(planPrice(id, cycle))}<span class="muted" style="font-size:14px;font-weight:400">/month</span></div>
-          <div class="small muted">${cycle === 'annual' ? `${money(annualTotal(id))} billed yearly — you save ${money(saving)}` : `or ${money(p.annualMonthly)}/mo billed yearly`}</div>
-          <ul class="price-list">
-            ${p.features.map((f) => `<li>${icon('check')}<span>${esc(f)}</span></li>`).join('')}
-            ${p.missing.map((f) => `<li class="off">${icon('x')}<span>${esc(f)}</span></li>`).join('')}
-          </ul>
-          <button class="btn ${id === 'pro' ? 'btn-primary' : ''} btn-lg btn-block" style="margin-top:16px" data-choose="${id}" ${current && cycle === user.cycle ? 'disabled' : ''}>
-            ${current ? 'Current plan' : id === 'pro' ? 'Upgrade to Pro' : 'Switch to Basic'}
-          </button>
-        </div>`;
-    };
-
     return `
-      <div class="page-head">
-        <h1>Plan &amp; billing</h1>
-        <p class="muted">You're on <strong>${esc(PLANS[user.plan].name)}</strong>, billed ${esc(cycle)}. Change or cancel any time.</p>
+      <div class="price-head">
+        <h1>Simple, transparent pricing</h1>
+        <p class="muted">Everything you need to book more shows — no hidden fees.</p>
       </div>
 
-      <div class="row" style="margin-bottom:18px">
-        <div class="segmented" data-cycle>
-          <button data-c="monthly" aria-pressed="${cycle === 'monthly'}">Monthly</button>
-          <button data-c="annual" aria-pressed="${cycle === 'annual'}">Annual — save ${Math.round(ANNUAL_DISCOUNT * 100)}%</button>
-        </div>
+      <div class="switch-row" style="margin-bottom:26px">
+        <span class="switch-label ${cycle === 'monthly' ? 'on' : ''}">Monthly</span>
+        <button class="switch" data-cycle role="switch" aria-checked="${cycle === 'annual'}" aria-label="Bill annually"></button>
+        <span class="switch-label ${cycle === 'annual' ? 'on' : ''}">Annual</span>
+        <span class="badge badge-brand" style="opacity:${cycle === 'annual' ? 1 : 0};transition:opacity .15s">SAVE ${Math.round(ANNUAL_DISCOUNT * 100)}%</span>
       </div>
 
-      <div class="price-grid">${card('basic')}${card('pro')}</div>
+      <div class="price-grid">
+        ${card('basic', cycle, user.plan)}
+        ${card('pro', cycle, user.plan)}
+      </div>
 
-      <div class="card" style="margin-top:22px;max-width:780px">
+      <p class="center small muted" style="margin-top:24px">Cancel anytime · Secure billing via Stripe · All prices in USD</p>
+
+      <div class="card" style="max-width:700px;margin:22px auto 0">
         <h3>What counts as a send?</h3>
-        <p class="muted small">One EPK email to one booking contact. Follow-ups you send from the tracker count too. Basic resets on the 1st of each month; Pro is uncapped.</p>
+        <p class="small muted">One EPK email to one booking contact. Follow-ups sent from the tracker count too. Basic resets on your billing date; Pro is uncapped.</p>
         <h3 style="margin-top:14px">Billing</h3>
-        <p class="muted small">This prototype does not process payments — choosing a plan switches the feature set immediately so you can see both tiers.</p>
+        <p class="small muted" style="margin:0">This prototype doesn't process payments — choosing a plan switches the feature set immediately so you can see both tiers.</p>
       </div>`;
   },
 
   mount(root, ctx) {
-    root.querySelectorAll('[data-cycle] button').forEach((btn) => btn.addEventListener('click', () => {
-      updateUser({ cycle: btn.dataset.c });
+    root.querySelector('[data-cycle]')?.addEventListener('click', () => {
+      updateUser({ cycle: currentUser().cycle === 'annual' ? 'monthly' : 'annual' });
       ctx.rerender();
-    }));
+    });
 
     root.querySelectorAll('[data-choose]').forEach((btn) => btn.addEventListener('click', () => {
       const id = btn.dataset.choose;
-      const user = currentUser();
-      if (id === 'basic' && user.plan === 'pro') {
+      if (id === 'basic' && currentUser().plan === 'pro') {
         confirmModal(
           'Switch to Basic?',
-          'You keep your data, but sends are capped at 25/month and follow-up reminders, saved lists, export and analytics switch off.',
+          'You keep your data, but sends are capped at 15/month and the EPK generator, follow-up reminders, saved lists, export and analytics switch off.',
           () => { updateUser({ plan: 'basic' }); toast('Switched to Basic.'); ctx.rerender(); },
           'Switch to Basic',
         );

@@ -1,140 +1,175 @@
-// Dashboard: pipeline snapshot, follow-ups, suggested venues, recent activity.
+// Dashboard — greeting, pipeline metrics, recent outreach, follow-ups, coverage.
 
 import {
   currentUser, myOutreach, outreachStats, activeVenues, venueById, dueFollowUps,
-  sendsRemaining, plan, isPro, defaultEpk, loadDemoOutreach, statusMeta,
+  sendsRemaining, plan, isPro, can, defaultEpk, epkProgress, loadDemoOutreach, statusMeta,
 } from '../store.js';
-import { esc, icon, relTime, fmtDate, plural } from '../ui.js';
+import { esc, icon, relTime, fmtDate, tileClass, initials, plural } from '../ui.js';
 
-function suggestedVenues(user, limit = 5) {
-  const contacted = new Set(myOutreach().map((o) => o.venueId));
-  const genres = new Set(user.genres || []);
-  return activeVenues()
-    .filter((v) => !contacted.has(v.id))
-    .map((v) => {
-      let score = 0;
-      if (v.genres.some((g) => genres.has(g))) score += 3;
-      if (user.homeState && v.state === user.homeState) score += 2;
-      if (user.homeCity && v.city === user.homeCity) score += 2;
-      if (v.capacity <= 350) score += 1;
-      return { v, score };
-    })
-    .sort((a, b) => b.score - a.score || a.v.name.localeCompare(b.v.name))
-    .slice(0, limit)
-    .map((x) => x.v);
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 export default {
   title: 'Dashboard',
+
+  topbar() {
+    const user = currentUser();
+    const follow = dueFollowUps().length;
+    const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+    // Greet the person, not the band — "Good morning, The" reads badly.
+    const who = (user.realName || '').trim().split(/\s+/)[0] || user.artistName || 'there';
+    return {
+      title: `${greeting()}, ${esc(who)}`,
+      sub: `${esc(today)}${follow ? ` · ${follow} follow-up${follow === 1 ? '' : 's'} due` : ''}`,
+    };
+  },
 
   render() {
     const user = currentUser();
     const stats = outreachStats();
     const mine = myOutreach();
     const epk = defaultEpk();
+    const progress = epkProgress(epk);
     const remaining = sendsRemaining();
-    const cap = plan().limits.sendsPerMonth;
+    const venues = activeVenues();
+    const contacted = new Set(mine.map((o) => o.venueId));
+    const booked = mine.filter((o) => o.status === 'booked');
     const follows = dueFollowUps();
-    const recent = [...mine].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 6);
+    const upcoming = mine
+      .filter((o) => o.followUpAt && ['sent', 'opened'].includes(o.status))
+      .sort((a, b) => new Date(a.followUpAt) - new Date(b.followUpAt))
+      .slice(0, 4);
+    const recent = [...mine].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 5);
+    const sentThisMonth = mine.filter((o) => {
+      const d = new Date(o.sentAt);
+      const n = new Date();
+      return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
+    }).length;
+    const coverage = venues.length ? (contacted.size / venues.length) * 100 : 0;
 
-    const quota = cap === Infinity
-      ? `<div class="small muted">Unlimited sends on Pro.</div>`
-      : `<div class="bar" style="margin-top:8px"><span style="width:${Math.round(((cap - remaining) / cap) * 100)}%"></span></div>
-         <div class="small muted" style="margin-top:6px">${remaining} of ${cap} sends left this month · <a href="#/pricing">Go unlimited</a></div>`;
+    // On Basic only the bio section is reachable, so don't nag about Pro-only sections.
+    const incomplete = !epk
+      || !progress.done.bio
+      || (can('epkGenerator') && progress.count < progress.total);
+    const nudge = incomplete ? `
+      <div class="card card-tight row" style="gap:12px;margin-bottom:14px;background:var(--brand-tint);border-color:var(--brand-line)">
+        <span class="tile ${epk ? 't1' : 't3'}">${icon('doc')}</span>
+        <div class="grow">
+          <div><strong>${epk ? 'Your EPK isn\'t finished yet' : 'Your EPK isn\'t set up yet'}</strong></div>
+          <div class="small muted">${!epk
+            ? 'Add your bio, photos and music links to start sending.'
+            : can('epkGenerator')
+              ? `${progress.count} of ${progress.total} sections complete — venues see whatever is filled in.`
+              : 'Add a short bio — it becomes the body of every outreach email.'}</div>
+        </div>
+        <a class="btn btn-primary btn-sm" href="${epk ? `#/epk/${esc(epk.id)}` : '#/epk'}">${epk ? 'Finish EPK' : 'Set up EPK'}</a>
+      </div>` : '';
 
     return `
-      <div class="page-head">
-        <h1>${esc(user.artistName || 'Welcome')}</h1>
-        <p class="muted">${mine.length
-          ? `${plural(stats.sent, 'venue')} contacted · ${plural(stats.replied, 'reply', 'replies')} · ${plural(stats.booked, 'show')} booked`
-          : 'No outreach yet — pick a venue and send your first EPK.'}</p>
+      ${nudge}
+
+      <div class="grid grid-4" style="margin-bottom:14px">
+        <div class="stat">
+          <div class="stat-label">EPKs sent</div>
+          <div class="stat-value">${stats.sent}</div>
+          <div class="stat-foot ${sentThisMonth ? 'up' : ''}">${sentThisMonth ? `+${sentThisMonth} this month` : 'none yet this month'}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Sends remaining</div>
+          <div class="stat-value" style="color:${remaining === Infinity ? 'var(--good)' : remaining <= 3 ? 'var(--warn)' : 'var(--ink)'}">${remaining === Infinity ? '∞' : remaining}</div>
+          <div class="stat-foot">${remaining === Infinity ? 'Pro · unlimited' : `Basic · ${plan().limits.sendsPerMonth}/month`}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Venues contacted</div>
+          <div class="stat-value">${contacted.size}</div>
+          <div class="stat-foot">of ${venues.length} in database</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Shows booked</div>
+          <div class="stat-value">${booked.length}</div>
+          <div class="stat-foot ${booked.length ? 'up' : ''}">${booked.length
+            ? esc(booked.slice(0, 2).map((o) => venueById(o.venueId)?.name).filter(Boolean).join(', '))
+            : 'keep pitching'}</div>
+        </div>
       </div>
 
-      <div class="grid grid-4" style="margin-bottom:18px">
-        <div class="stat"><div class="stat-label">EPKs sent</div><div class="stat-value">${stats.sent}</div><div class="stat-foot">all time</div></div>
-        <div class="stat"><div class="stat-label">Replies</div><div class="stat-value">${stats.replied}</div><div class="stat-foot">${stats.replyRate}% reply rate</div></div>
-        <div class="stat"><div class="stat-label">Booked</div><div class="stat-value">${stats.booked}</div><div class="stat-foot">${stats.bookRate}% of sends</div></div>
-        <div class="stat"><div class="stat-label">Awaiting reply</div><div class="stat-value">${mine.filter((o) => ['sent', 'opened'].includes(o.status)).length}</div><div class="stat-foot">${follows.length} due a nudge</div></div>
-      </div>
-
-      <div class="grid grid-2" style="align-items:start">
-        <div class="stack">
-          <div class="card">
-            <div class="row-between" style="margin-bottom:6px">
-              <h3>This month</h3>
-              <span class="badge ${isPro() ? 'badge-pro' : 'badge-brand'}">${esc(plan().name.toUpperCase())}</span>
-            </div>
-            ${quota}
+      <div class="grid" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:start">
+        <div class="card card-flush">
+          <div class="card-head">
+            <h3>Recent outreach</h3>
+            <a class="small" href="#/outreach">View all</a>
           </div>
-
-          <div class="card">
-            <div class="row-between" style="margin-bottom:10px">
-              <h3>Follow-ups due</h3>
-              ${isPro() ? '' : '<span class="badge badge-outline">PRO</span>'}
-            </div>
-            ${!isPro()
-              ? `<p class="muted small">Pro reminds you when a venue has gone quiet for ${esc(String(10))} days, so nothing slips. <a href="#/pricing">Upgrade</a></p>`
-              : follows.length
-                ? `<div class="stack-sm">${follows.slice(0, 4).map((o) => {
-                    const v = venueById(o.venueId);
-                    return `<div class="row-between">
-                      <div><a href="#/venues/${esc(o.venueId)}"><strong>${esc(v?.name || 'Venue')}</strong></a>
-                        <div class="small muted">Sent ${relTime(o.sentAt)} · due ${fmtDate(o.followUpAt)}</div></div>
-                      <a class="btn btn-sm" href="#/send?venue=${esc(o.venueId)}">Follow up</a>
-                    </div>`;
-                  }).join('')}</div>
-                  ${follows.length > 4 ? `<p class="hint"><a href="#/outreach?filter=followups">See all ${follows.length}</a></p>` : ''}`
-                : '<p class="muted small">Nothing due. Everything you\'ve sent is still inside the reminder window.</p>'}
-          </div>
-
-          <div class="card">
-            <h3>Your EPK</h3>
-            ${epk
-              ? `<div class="row-between" style="margin-top:8px">
-                   <div>
-                     <strong>${esc(epk.title)}</strong>
-                     <div class="small muted">Updated ${relTime(epk.updatedAt)} · ${epk.shortBio ? 'short bio set' : 'no short bio yet'}</div>
-                   </div>
-                   <a class="btn btn-sm" href="#/epk/${esc(epk.id)}">${icon('edit')} Edit</a>
-                 </div>`
-              : '<p class="muted small">You don\'t have an EPK yet. <a href="#/epk">Create one</a> before your first send.</p>'}
-          </div>
+          ${recent.length ? recent.map((o) => {
+            const v = venueById(o.venueId);
+            const meta = statusMeta(o.status);
+            return `<a class="lrow" href="#/venues/${esc(o.venueId)}">
+              <span class="tile ${tileClass(v?.name)}">${esc(initials(v?.name || '?'))}</span>
+              <span class="lrow-main">
+                <span class="lrow-name truncate" style="display:block">${esc(v?.name || 'Venue')}</span>
+                <span class="lrow-meta">${esc(v ? `${v.city}, ${v.state} · Cap. ${v.capacity}` : '')}</span>
+              </span>
+              <span class="badge ${meta.cls}"><span class="dot"></span>${esc(meta.label)}</span>
+              <span class="xs muted nowrap">${relTime(o.updatedAt)}</span>
+            </a>`;
+          }).join('') : `
+            <div class="empty">
+              <p class="muted">No outreach yet — pick a venue and send your first EPK.</p>
+              <div class="row" style="justify-content:center">
+                <a class="btn btn-primary btn-sm" href="#/venues">${icon('pin')} Browse venues</a>
+                <button class="btn btn-sm" data-demo>Load sample pipeline</button>
+              </div>
+            </div>`}
         </div>
 
         <div class="stack">
           <div class="card card-flush">
-            <div class="card-head"><h3>Suggested venues</h3><a class="small" href="#/venues">Browse all</a></div>
-            <div>
-              ${suggestedVenues(user).map((v) => `
-                <div class="row-between" style="padding:12px 18px;border-bottom:1px solid var(--line)">
-                  <div class="grow">
-                    <a href="#/venues/${esc(v.id)}"><strong>${esc(v.name)}</strong></a>
-                    <div class="small muted">${esc(v.city)}, ${esc(v.state)} · cap ${v.capacity} · ${esc(v.genres.slice(0, 2).join(', '))}</div>
-                  </div>
-                  <a class="btn btn-sm btn-primary" href="#/send?venue=${esc(v.id)}">${icon('send')} Send</a>
-                </div>`).join('')}
+            <div class="card-head">
+              <h3>Follow-up reminders</h3>
+              ${isPro() ? '<a class="small" href="#/outreach?filter=followups">Manage</a>' : '<span class="badge badge-outline">PRO</span>'}
+            </div>
+            ${!isPro()
+              ? `<div class="card-body"><p class="small muted" style="margin:0">Pro nudges you when a venue has gone quiet, so a warm lead never goes cold. <a href="#/pricing">Compare plans</a></p></div>`
+              : upcoming.length
+                ? upcoming.map((o) => {
+                    const v = venueById(o.venueId);
+                    const due = new Date(o.followUpAt) <= new Date();
+                    return `<div class="dot-item">
+                      <span class="dot-mark ${due ? 'dot-today' : 'dot-soon'}"></span>
+                      <div class="grow">
+                        <div class="dot-text">Follow up with ${esc(v?.name || 'venue')}</div>
+                        <div class="dot-when">${due ? 'Due now' : fmtDate(o.followUpAt)} · EPK sent ${fmtDate(o.sentAt)}</div>
+                      </div>
+                      <a class="btn btn-sm" href="#/send?venue=${esc(o.venueId)}">Send</a>
+                    </div>`;
+                  }).join('')
+                : `<div class="card-body"><p class="small muted" style="margin:0">Nothing due. Everything you've sent is still inside the reminder window.</p></div>`}
+          </div>
+
+          <div class="card card-flush">
+            <div class="card-head"><h3>Database coverage</h3></div>
+            <div class="card-body">
+              <div class="row-between small" style="margin-bottom:8px">
+                <span class="muted">Venues contacted</span>
+                <span><strong>${contacted.size} / ${venues.length}</strong></span>
+              </div>
+              <div class="bar"><span style="width:${Math.max(1, Math.round(coverage))}%"></span></div>
+              <div class="xs muted" style="margin-top:7px">${(100 - coverage).toFixed(1)}% of venues not yet reached</div>
             </div>
           </div>
 
           <div class="card card-flush">
-            <div class="card-head"><h3>Recent activity</h3><a class="small" href="#/outreach">Tracker</a></div>
-            <div class="card-body">
-              ${recent.length
-                ? `<div class="timeline">${recent.map((o) => {
-                    const v = venueById(o.venueId);
-                    const meta = statusMeta(o.status);
-                    return `<div class="timeline-item">
-                      <div class="row" style="gap:8px">
-                        <span class="badge ${meta.cls}"><span class="dot"></span>${esc(meta.label)}</span>
-                        <a href="#/venues/${esc(o.venueId)}">${esc(v?.name || 'Venue')}</a>
-                      </div>
-                      <div class="small muted">${esc(v ? `${v.city}, ${v.state}` : '')} · ${relTime(o.updatedAt)}</div>
-                    </div>`;
-                  }).join('')}</div>`
-                : `<div class="empty" style="padding:24px">
-                     <p class="muted">Nothing here yet.</p>
-                     <button class="btn btn-sm" data-demo>Load sample pipeline</button>
-                   </div>`}
+            <div class="card-head"><h3>Pipeline</h3><a class="small" href="#/outreach">Tracker</a></div>
+            <div class="card-body stack-sm">
+              ${[['Replied', stats.replied, 'st-replied'], ['Awaiting reply', mine.filter((o) => ['sent', 'opened'].includes(o.status)).length, 'st-sent'], ['Declined', stats.declined, 'st-declined']]
+                .map(([label, n, cls]) => `<div class="row-between small">
+                  <span class="badge ${cls}"><span class="dot"></span>${esc(label)}</span>
+                  <span class="mono-num muted">${n}</span>
+                </div>`).join('')}
+              <div class="row-between small"><span class="muted">Reply rate</span><span><strong>${stats.replyRate}%</strong></span></div>
             </div>
           </div>
         </div>
