@@ -68,7 +68,13 @@ pane for the selected venue.
 
 Adding a venue offers two destinations — keep it **private** to the account (live
 immediately, marked in the list and counted in a "Private: n" badge) or **submit it to the
-shared database**, where it waits at status `pending` for admin review.
+shared database**, where it waits at status `pending` for admin review. A venue already in
+the database is flagged as the artist types, before they submit a duplicate.
+
+Above the list, **Your submissions** shows what happened to the rooms this artist sent in:
+an "In review" stamp while it's queued, a "Not accepted" stamp with the admin's reason if it
+was declined, and a dismiss action to clear a declined row. Approved venues leave the block
+and appear in the shared list like any other room.
 
 ### 3.5 Venue detail (the right-hand pane)
 Header with initials tile, name, location, pipeline badge and genre chips, plus Send EPK and
@@ -136,7 +142,11 @@ access, and data controls (load sample pipeline, reset).
 - **Venue database** — searchable table over every row with full editor, add and delete.
 - **Import spreadsheet** — CSV drop or paste → column mapping guessed from headers → preview →
   import, de-duplicating on *name + city*, optionally as pending review.
-- **Submissions** — subscriber-suggested venues; approve publishes to everyone.
+- **Submissions** — subscriber-suggested venues, oldest first, badged in the sidebar with
+  the queue length and flagged where a row looks like a duplicate. Reviewing opens the full
+  venue record: **approve publishes whatever is in the form**, so a good suggestion with a
+  missing email or a mangled suburb is corrected rather than declined. Declining requires a
+  reason and keeps the row, so the submitter is told why and doesn't resend it next week.
 - **Users** — accounts, plan, billing cycle, admin toggle, delete.
 
 ## 4. Data model
@@ -144,8 +154,9 @@ access, and data controls (load sample pipeline, reset).
 - **User** — email, artist name, contact name, genres, home city/state, draw, links, photo,
   plan, cycle, admin flag, onboarding step
 - **Venue** — name, city, state, coordinates, capacity, type, genres, booking contact, email,
-  website, submission method, pay structure, notes, status (active / pending / archived),
-  visibility (shared / private), owner, source
+  website, submission method, pay structure, notes, status (active / pending / rejected /
+  archived), visibility (shared / private), owner, source, submitted-by, review
+  (state, reason, decided-at, decided-by)
 - **EPK** — title, tagline, short bio, long bio, notable performances, genres, base city, set
   length, audience size, music links, social links, tech rider, photos, tracks, press quotes,
   uploaded file, default flag

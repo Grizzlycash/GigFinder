@@ -15,8 +15,9 @@ npm test         # builds, then drives the whole app in Chromium
 ```
 
 React + Vite + Tailwind v4 + shadcn/ui. `npm test` builds the production bundle, serves it,
-and walks 21 steps — signup through onboarding, venue filtering, map pins, both tier states
-of the EPK generator, a real send, the tracker, the admin CSV import — failing on any console
+and walks 27 steps — signup through onboarding, venue filtering, map pins, both tier states
+of the EPK generator, a real send, the tracker, the venue submission round trip, the admin
+CSV import — failing on any console
 or page error. It also asserts there's a visible keyboard focus ring and no horizontal
 overflow on mobile. Screenshots land in `test/screenshots/` (gitignored). Playwright is
 needed for the test only: `npm i -D playwright && npx playwright install chromium`.
@@ -44,7 +45,8 @@ Two components carry the aesthetic:
 
 - **`Stamp`** — the signature element. Contact status printed as a rubber stamp, one ink per
   status, each tilted a few degrees by a hash of the venue id so it's consistent but never
-  mechanical. "Not contacted" prints faint so contacted rooms pop.
+  mechanical. "Not contacted" prints faint so contacted rooms pop. The same stamps carry the
+  review states of a submitted venue — ochre "In review", dead grey "Not accepted".
 - **`VenueCard`** — a venue as a ticket stub: perforated left edge, paper stock, name in
   poster type, dashed rule above the genre/pay footer.
 
@@ -147,6 +149,30 @@ the cache clears when the provider changes.
 Rewrites (`Tighten`, `Warm it up`, `Shorten`, `Personalise`) act on the draft that already
 exists rather than generating from scratch — consistency is the product's promise, and the
 first draft should never be a dice roll. They're gated to Pro (`can('aiRewrite')`).
+
+## Adding venues
+
+An artist adding a venue picks where it lives. **Private** is theirs alone — live straight
+away, never visible to another account. **Submit to the shared database** puts it in front of
+an admin first, because the shared database is every subscriber's data and one bad row costs
+everyone a wasted pitch.
+
+A submitted venue sits at `status: 'pending'`, which `activeVenues()` excludes — so it stays
+out of the venue list, the map, the send dropdown and the dashboard counts until it's
+approved. **Your submissions** on the Venues page is what stops it looking like the venue
+simply vanished: it shows the review stamp while the room is queued and the admin's reason if
+it was declined.
+
+In **Admin → Submissions** (sidebar-badged with the queue length), reviewing opens the whole
+record. Approving publishes *the form*, not the submission — a good room with a missing email
+is worth fixing rather than declining. Declining requires a reason and keeps the row rather
+than deleting it, so the submitter finds out why instead of resending the same venue next
+week. Both sides warn on a likely duplicate, matched on *name + suburb* against venues that
+account can actually see.
+
+The lifecycle lives in `src/store/store.js`: `addVenue(data, visibility)`,
+`mySubmissions()`, `pendingSubmissions()`, `findDuplicateVenue()`, `approveVenue(id, patch)`,
+`rejectVenue(id, reason)`, `dismissSubmission(id)`.
 
 ## Data
 

@@ -275,6 +275,16 @@ await step('add a private venue', async () => {
   );
 });
 
+await step('adding a venue warns about an existing one', async () => {
+  await page.click('[data-add]');
+  await page.waitForSelector('#av-name');
+  await page.fill('#av-name', 'The Back Room');
+  await page.fill('#av-city', 'Brunswick');
+  await page.waitForSelector('[data-duplicate]', { timeout: 3000 });
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+});
+
 await step('submit a venue to the shared database', async () => {
   await page.goto(`${BASE}/#/venues`, { waitUntil: 'networkidle' });
   await page.click('[data-add]');
@@ -283,25 +293,71 @@ await step('submit a venue to the shared database', async () => {
   await page.fill('#av-city', 'Thornbury');
   await page.click('#vis-shared');
   await page.click('[data-add-save]');
+  // Held back from the shared list, but the submitter can see it's in review.
+  await page.waitForSelector('[data-submission="pending"]', { timeout: 5000 });
+  await page.fill('[data-q]', 'Old Signal Box');
   await page.waitForTimeout(400);
+  if (await page.locator('.stub').count() !== 0) throw new Error('pending venue leaked into the shared list');
+  await shot('15-venue-submissions');
+  await page.fill('[data-q]', '');
 });
 
-await step('admin — submissions queue', async () => {
+await step('admin declines a submission with a reason', async () => {
   await page.goto(`${BASE}/#/settings`, { waitUntil: 'networkidle' });
   await page.getByRole('checkbox', { name: /admin access/i }).click();
   await page.click('[data-settings] button[type=submit]');
   await page.waitForTimeout(300);
   await page.goto(`${BASE}/#/admin/overview`, { waitUntil: 'networkidle' });
   await page.waitForSelector('text=Coverage by suburb');
-  await shot('15-admin-overview');
+  await shot('16-admin-overview');
   await page.click('a[href="#/admin/submissions"]');
-  await page.waitForSelector('[data-approve]');
+  await page.waitForSelector('[data-review]');
+  await page.click('[data-review]');
+  await page.waitForSelector('[data-reject-reason]');
+  await shot('17-admin-review');
+  await page.fill('[data-reject-reason]', 'Already listed as The Signal, Thornbury');
+  await page.click('[data-reject]');
+  await page.waitForSelector('text=Queue is clear', { timeout: 5000 });
+});
+
+await step('the submitter is told why, and can clear it', async () => {
+  await page.goto(`${BASE}/#/venues`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('[data-submission="rejected"]');
+  const text = await page.locator('[data-submission="rejected"]').innerText();
+  if (!text.includes('Already listed as The Signal')) throw new Error('rejection reason not shown to the submitter');
+  await page.click('[data-dismiss]');
+  await page.waitForTimeout(400);
+  if (await page.locator('[data-submission]').count() !== 0) throw new Error('dismissed submission still listed');
+});
+
+await step('admin edits a submission, then publishes it', async () => {
+  await page.click('[data-add]');
+  await page.waitForSelector('#av-name');
+  await page.fill('#av-name', 'The Old Signal Box');
+  await page.fill('#av-city', 'Thornbury');
+  await page.click('#vis-shared');
+  await page.click('[data-add-save]');
+  await page.waitForSelector('[data-submission="pending"]');
+
+  await page.goto(`${BASE}/#/admin/submissions`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('[data-review]');
+  await page.click('[data-review]');
+  await page.waitForSelector('#r-name');
+  await page.fill('#r-name', 'The Signal Box');
+  await page.fill('#r-capacity', '220');
   await page.click('[data-approve]');
-  await page.waitForTimeout(300);
+  await page.waitForSelector('text=Queue is clear', { timeout: 5000 });
+
+  await page.goto(`${BASE}/#/venues`, { waitUntil: 'networkidle' });
+  await page.fill('[data-q]', 'Signal Box');
+  await page.waitForTimeout(400);
+  if (await page.locator('.stub').count() !== 1) throw new Error('approved venue is not in the shared list');
+  if (await page.locator('[data-submission]').count() !== 0) throw new Error('approved venue is still shown as a submission');
+  await page.fill('[data-q]', '');
 });
 
 await step('admin — CSV import', async () => {
-  await page.click('a[href="#/admin/import"]');
+  await page.goto(`${BASE}/#/admin/import`, { waitUntil: 'networkidle' });
   await page.waitForSelector('#csv-paste');
   await page.fill('#csv-paste', 'Venue,Suburb,Capacity,Booking Email,Genres,Latitude,Longitude\nThe Rusted Kettle,Northcote,180,bookings@rusted.example.com,Indie; Folk,-37.77,145.00');
   await page.click('[data-parse-paste]');
@@ -312,14 +368,14 @@ await step('admin — CSV import', async () => {
   await page.fill('[data-q]', 'Rusted Kettle');
   await page.waitForTimeout(400);
   if (await page.locator('table tbody tr').count() !== 1) throw new Error('imported venue not found');
-  await shot('16-admin-venues');
+  await shot('18-admin-venues');
 });
 
 await step('mobile layout has no horizontal overflow', async () => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${BASE}/#/venues`, { waitUntil: 'networkidle' });
   await page.waitForSelector('.stub');
-  await shot('17-mobile-venues');
+  await shot('19-mobile-venues');
   const scrollW = await page.evaluate(() => document.documentElement.scrollWidth);
   const clientW = await page.evaluate(() => document.documentElement.clientWidth);
   if (scrollW > clientW + 2) throw new Error(`horizontal overflow on mobile: ${scrollW} > ${clientW}`);

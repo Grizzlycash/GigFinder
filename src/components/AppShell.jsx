@@ -4,7 +4,7 @@ import {
   LayoutGrid, MapPin, Map as MapIcon, Phone, User, Star, Settings as SettingsIcon,
   Shield, Menu, Send, ChevronRight, Zap, LogOut, ArrowLeft, Database, Upload, Users as UsersIcon, BarChart3,
 } from 'lucide-react';
-import { currentUser, signOut, plan, isPro, dueFollowUps, sendsRemaining } from '@/store/store';
+import { currentUser, signOut, plan, isPro, dueFollowUps, sendsRemaining, pendingSubmissions } from '@/store/store';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -28,13 +28,14 @@ const ADMIN_NAV = [
   { to: '/admin/overview', label: 'Overview', icon: BarChart3 },
   { to: '/admin/venues', label: 'Venue database', icon: Database },
   { to: '/admin/import', label: 'Import spreadsheet', icon: Upload },
-  { to: '/admin/submissions', label: 'Submissions', icon: Shield },
+  { to: '/admin/submissions', label: 'Submissions', icon: Shield, badge: 'pending' },
   { to: '/admin/users', label: 'Users', icon: UsersIcon },
 ];
 
 function NavItem({ item, admin }) {
   const Icon = item.icon;
   const follow = dueFollowUps().length;
+  const queued = item.badge === 'pending' ? pendingSubmissions().length : 0;
   return (
     <NavLink
       to={item.to}
@@ -55,6 +56,7 @@ function NavItem({ item, admin }) {
           {item.badge === 'followups' && follow > 0 && (
             <Badge variant="red" className="ml-auto">{follow}</Badge>
           )}
+          {queued > 0 && <Badge variant="red" className="ml-auto" data-queue>{queued}</Badge>}
           {item.pro && !isPro() && <Badge variant="ink" className="ml-auto">Pro</Badge>}
         </>
       )}

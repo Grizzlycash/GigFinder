@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Search, Plus, Download, Send, Star, Map as MapIcon, Mail, ExternalLink } from 'lucide-react';
+import { Search, Plus, Download, Star, Map as MapIcon, Mail, ExternalLink, X, AlertTriangle } from 'lucide-react';
 import {
   activeVenues, venueById, outreachForVenue, myOutreach, STATUSES, setOutreachStatus,
   updateOutreach, isPro, myLists, createList, toggleListVenue, can, addVenue, myPrivateVenues,
+  mySubmissions, dismissSubmission, findDuplicateVenue,
 } from '@/store/store';
 import { VENUE_TYPES, ALL_GENRES } from '@/data/venues';
 import AppShell from '@/components/AppShell';
@@ -59,6 +60,12 @@ function FilterChip({ active, children, ...props }) {
 function AddVenueDialog({ open, onOpenChange }) {
   const navigate = useNavigate();
   const [visibility, setVisibility] = useState('private');
+  const [name, setName] = useState('');
+  const [city, setCity] = useState('');
+
+  // Checked as they type, so nobody submits a room that's already in the database
+  // and waits a week to be told so.
+  const duplicate = findDuplicateVenue({ name, city });
 
   function submit(e) {
     e.preventDefault();
@@ -79,6 +86,8 @@ function AddVenueDialog({ open, onOpenChange }) {
       notes: String(d.notes || '').trim(),
     }, visibility);
     onOpenChange(false);
+    setName('');
+    setCity('');
     if (visibility === 'shared') {
       toast.success('Sent for review', { description: 'The GigFinder team will check it before it goes live for everyone.' });
     } else {
@@ -97,11 +106,11 @@ function AddVenueDialog({ open, onOpenChange }) {
         <form onSubmit={submit} className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="av-name">Venue name</Label>
-            <Input id="av-name" name="name" required />
+            <Input id="av-name" name="name" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="av-city">Suburb</Label>
-            <Input id="av-city" name="city" required />
+            <Input id="av-city" name="city" value={city} onChange={(e) => setCity(e.target.value)} required />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="av-cap">Capacity</Label>
@@ -133,23 +142,105 @@ function AddVenueDialog({ open, onOpenChange }) {
           <div className="space-y-2 sm:col-span-2">
             <Label>Where should it live?</Label>
             <RadioGroup value={visibility} onValueChange={setVisibility}>
-              <label className="flex items-center gap-2 text-[0.82rem]">
-                <RadioGroupItem value="private" id="vis-private" />
-                <span>Private — only you see it</span>
+              <label className="flex items-start gap-2 text-[0.82rem]">
+                <RadioGroupItem value="private" id="vis-private" className="mt-0.5" />
+                <span>
+                  Private — only you see it
+                  <span className="block text-[0.72rem] text-paper-muted">Live straight away, and it never leaves your account.</span>
+                </span>
               </label>
-              <label className="flex items-center gap-2 text-[0.82rem]">
-                <RadioGroupItem value="shared" id="vis-shared" />
-                <span>Submit to the shared database for review</span>
+              <label className="flex items-start gap-2 text-[0.82rem]">
+                <RadioGroupItem value="shared" id="vis-shared" className="mt-0.5" />
+                <span>
+                  Submit to the shared database
+                  <span className="block text-[0.72rem] text-paper-muted">
+                    A GigFinder admin checks it before every subscriber sees it. You&apos;ll see the outcome under
+                    &ldquo;Your submissions&rdquo;.
+                  </span>
+                </span>
               </label>
             </RadioGroup>
           </div>
+
+          {duplicate && (
+            <p
+              data-duplicate
+              className="sm:col-span-2 flex gap-2 rounded-[3px] border border-stamp-emailed/50 bg-stamp-emailed/10 px-3 py-2 text-[0.78rem] text-paper-ink"
+            >
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-stamp-emailed" />
+              <span>
+                <strong className="font-semibold">{duplicate.name}</strong> in {duplicate.city} is already in the
+                database. Submitting it again will most likely be declined as a duplicate.
+              </span>
+            </p>
+          )}
+
           <DialogFooter className="sm:col-span-2">
             <Button type="button" variant="ghost-paper" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" data-add-save>Add venue</Button>
+            <Button type="submit" data-add-save>
+              {visibility === 'shared' ? 'Send for review' : 'Add venue'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * What happened to the venues this artist sent in. Submitted rooms are held out of the
+ * shared list until an admin approves them, so without this panel they'd simply vanish
+ * on submit — and a declined one would vanish without a reason.
+ */
+function YourSubmissions() {
+  const rows = mySubmissions();
+  if (!rows.length) return null;
+
+  return (
+    <Card className="mb-4">
+      <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
+        <CardTitle>Your submissions</CardTitle>
+        <span className="text-[0.72rem] text-paper-muted">{plural(rows.length, 'room')} awaiting or reviewed</span>
+      </CardHeader>
+      <CardContent className="space-y-2.5">
+        {rows.map((v) => (
+          <div
+            key={v.id}
+            data-submission={v.status}
+            className="flex flex-wrap items-start gap-x-3 gap-y-2 border-b border-dashed border-paper-line pb-2.5 last:border-0 last:pb-0"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="font-display uppercase tracking-[0.04em] text-[0.9rem] leading-tight">{v.name}</p>
+              <p className="text-[0.74rem] text-paper-muted">
+                {v.city} · sent {fmtDateTime(v.addedAt)}
+              </p>
+              {v.status === 'pending' && (
+                <p className="mt-1 text-[0.76rem] text-paper-muted">
+                  With the GigFinder team. It goes live for everyone once it&apos;s approved.
+                </p>
+              )}
+              {v.status === 'rejected' && (
+                <p className="mt-1 text-[0.76rem] text-paper-ink">
+                  {v.review?.reason || 'Declined without a reason given.'}
+                </p>
+              )}
+            </div>
+            <Stamp status={v.status === 'rejected' ? 'rejected' : 'pending'} seed={v.id} />
+            {v.status === 'rejected' && (
+              <Button
+                variant="ghost-paper"
+                size="icon-sm"
+                aria-label={`Dismiss ${v.name}`}
+                data-dismiss
+                onClick={() => { dismissSubmission(v.id); toast('Cleared'); }}
+              >
+                <X className="size-3.5" />
+              </Button>
+            )}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -467,6 +558,7 @@ export default function Venues() {
       {/* ---- Flash sheet + detail ---- */}
       <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_23rem] xl:items-start">
         <div className="space-y-2">
+          <YourSubmissions />
           {rows.length ? (
             rows.map((v) => (
               <VenueCard

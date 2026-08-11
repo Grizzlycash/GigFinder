@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Search, Plus, Download, Upload, Check, X, Trash2, Pencil } from 'lucide-react';
+import { Search, Plus, Download, Upload, Check, X, Trash2, Pencil, AlertTriangle } from 'lucide-react';
 import {
   state, save, upsertVenue, deleteVenue, PLANS, planPrice, currentUser,
+  pendingSubmissions, findDuplicateVenue, approveVenue, rejectVenue,
 } from '@/store/store';
 import { VENUE_TYPES, slugify } from '@/data/venues';
 import AppShell from '@/components/AppShell';
@@ -153,7 +154,7 @@ function VenueDialog({ venue, open, onOpenChange }) {
             <Label htmlFor="v-status">Status</Label>
             <Select name="status" defaultValue={v.status || 'active'}>
               <SelectTrigger id="v-status"><SelectValue /></SelectTrigger>
-              <SelectContent>{['active', 'pending', 'archived'].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              <SelectContent>{['active', 'pending', 'rejected', 'archived'].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
@@ -448,8 +449,142 @@ function ImportTab() {
   );
 }
 
+/**
+ * Review one submission before it becomes everyone's data. Approving publishes whatever
+ * is in this form, not whatever was typed by the subscriber — a good suggestion with a
+ * missing email or a mangled suburb is worth fixing rather than declining.
+ */
+function ReviewDialog({ venue, open, onOpenChange }) {
+  const [reason, setReason] = useState('');
+  if (!open || !venue) return null;
+
+  const duplicate = findDuplicateVenue(venue, venue.id);
+
+  function readForm(form) {
+    const d = Object.fromEntries(new FormData(form).entries());
+    return {
+      name: String(d.name || '').trim(),
+      city: String(d.city || '').trim(),
+      capacity: Number(d.capacity) || 0,
+      type: String(d.type || venue.type),
+      contactName: String(d.contactName || '').trim(),
+      contactEmail: String(d.contactEmail || '').trim(),
+      website: String(d.website || '').trim(),
+      lat: Number(d.lat) || 0,
+      lng: Number(d.lng) || 0,
+      genres: String(d.genres || '').split(',').map((g) => g.trim()).filter(Boolean),
+      notes: String(d.notes || ''),
+    };
+  }
+
+  function approve(e) {
+    e.preventDefault();
+    const patch = readForm(e.currentTarget);
+    if (!patch.name || !patch.city) { toast.error('Name and suburb are required'); return; }
+    approveVenue(venue.id, patch);
+    onOpenChange(false);
+    toast.success('Published to everyone', { description: `${patch.name} is now in the shared database.` });
+  }
+
+  function reject() {
+    if (!reason.trim()) { toast.error('Give a reason — the submitter sees it'); return; }
+    rejectVenue(venue.id, reason.trim());
+    onOpenChange(false);
+    setReason('');
+    toast('Declined', { description: 'The submitter has been told why.' });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Review submission</DialogTitle>
+        </DialogHeader>
+
+        <p className="text-[0.78rem] text-paper-muted">
+          Sent by {venue.submittedByEmail || 'a subscriber'} on {fmtDate(venue.addedAt)}. Correct anything
+          that&apos;s wrong before you publish it.
+        </p>
+
+        {duplicate && (
+          <p
+            data-review-duplicate
+            className="flex gap-2 rounded-[3px] border border-stamp-emailed/50 bg-stamp-emailed/10 px-3 py-2 text-[0.78rem] text-paper-ink"
+          >
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-stamp-emailed" />
+            <span>
+              Possible duplicate of <strong className="font-semibold">{duplicate.name}</strong> in {duplicate.city},
+              already active in the database.
+            </span>
+          </p>
+        )}
+
+        <form onSubmit={approve} className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="r-name">Venue name</Label>
+            <Input id="r-name" name="name" defaultValue={venue.name} required />
+          </div>
+          {[['city', 'Suburb'], ['capacity', 'Capacity'], ['contactName', 'Booking contact'], ['contactEmail', 'Booking email'],
+            ['website', 'Website'], ['lat', 'Latitude'], ['lng', 'Longitude']].map(([k, label]) => (
+            <div key={k} className="space-y-1.5">
+              <Label htmlFor={`r-${k}`}>{label}</Label>
+              <Input
+                id={`r-${k}`}
+                name={k}
+                // 0 means "the submitter didn't say", so show it as blank to fill in.
+                defaultValue={venue[k] || ''}
+                type={['capacity', 'lat', 'lng'].includes(k) ? 'number' : 'text'}
+                step="any"
+              />
+            </div>
+          ))}
+          <div className="space-y-1.5">
+            <Label htmlFor="r-type">Type</Label>
+            <Select name="type" defaultValue={venue.type || 'Pub'}>
+              <SelectTrigger id="r-type"><SelectValue /></SelectTrigger>
+              <SelectContent>{VENUE_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="r-genres">Genres</Label>
+            <Input id="r-genres" name="genres" defaultValue={(venue.genres || []).join(', ')} />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="r-notes">Booking notes</Label>
+            <Textarea id="r-notes" name="notes" rows={2} defaultValue={venue.notes} />
+          </div>
+
+          <div className="space-y-1.5 sm:col-span-2 border-t border-dashed border-paper-line pt-3">
+            <Label htmlFor="r-reason">Reason, if you&apos;re declining it</Label>
+            <Input
+              id="r-reason"
+              data-reject-reason
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Already listed as The Tote, Collingwood"
+            />
+            <p className="text-[0.72rem] text-paper-muted">Shown to the artist who sent it in, so they know not to resend.</p>
+          </div>
+
+          <DialogFooter className="sm:col-span-2">
+            <Button type="button" variant="ghost-paper" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="paper" onClick={reject} data-reject>
+              <X className="size-3.5" /> Decline
+            </Button>
+            <Button type="submit" data-approve>
+              <Check className="size-3.5" /> Approve &amp; publish
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function Submissions() {
-  const pending = state.venues.filter((v) => v.status === 'pending');
+  const pending = pendingSubmissions();
+  const [reviewing, setReviewing] = useState(null);
+
   if (!pending.length) {
     return (
       <Card className="mx-auto max-w-lg"><CardContent className="py-12 text-center">
@@ -458,38 +593,48 @@ function Submissions() {
       </CardContent></Card>
     );
   }
+
   return (
-    <Card className="overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead>Venue</TableHead><TableHead className="hidden sm:table-cell">Suburb</TableHead>
-            <TableHead className="hidden lg:table-cell">Email</TableHead><TableHead>Submitted</TableHead><TableHead className="text-right">Review</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {pending.map((v) => (
-            <TableRow key={v.id}>
-              <TableCell>
-                <span className="font-display uppercase tracking-[0.04em] text-[0.88rem]">{v.name}</span>
-                <span className="block text-[0.7rem] text-paper-muted">{v.source}</span>
-              </TableCell>
-              <TableCell className="hidden sm:table-cell text-[0.8rem] text-paper-muted">{v.city}</TableCell>
-              <TableCell className="hidden lg:table-cell text-[0.78rem] text-paper-muted">{v.contactEmail || '—'}</TableCell>
-              <TableCell className="whitespace-nowrap text-[0.78rem] text-paper-muted">{fmtDate(v.addedAt)}</TableCell>
-              <TableCell className="whitespace-nowrap text-right">
-                <Button size="sm" data-approve onClick={() => { upsertVenue({ id: v.id, status: 'active' }); toast.success('Published to everyone'); }}>
-                  <Check className="size-3.5" /> Approve
-                </Button>
-                <Button variant="ghost-paper" size="icon-sm" aria-label="Reject" onClick={() => { deleteVenue(v.id); toast('Rejected'); }}>
-                  <X className="size-3.5" />
-                </Button>
-              </TableCell>
+    <>
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead>Venue</TableHead><TableHead className="hidden sm:table-cell">Suburb</TableHead>
+              <TableHead className="hidden lg:table-cell">Email</TableHead><TableHead>Submitted</TableHead><TableHead className="text-right">Review</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Card>
+          </TableHeader>
+          <TableBody>
+            {pending.map((v) => {
+              const duplicate = findDuplicateVenue(v, v.id);
+              return (
+                <TableRow key={v.id}>
+                  <TableCell>
+                    <span className="font-display uppercase tracking-[0.04em] text-[0.88rem]">{v.name}</span>
+                    <span className="block text-[0.7rem] text-paper-muted">{v.source}</span>
+                    {duplicate && (
+                      <span className="mt-0.5 inline-flex items-center gap-1 text-[0.7rem] text-stamp-emailed">
+                        <AlertTriangle className="size-3" /> Possible duplicate
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell text-[0.8rem] text-paper-muted">{v.city}</TableCell>
+                  <TableCell className="hidden lg:table-cell text-[0.78rem] text-paper-muted">{v.contactEmail || '—'}</TableCell>
+                  <TableCell className="whitespace-nowrap text-[0.78rem] text-paper-muted">{fmtDate(v.addedAt)}</TableCell>
+                  <TableCell className="whitespace-nowrap text-right">
+                    <Button size="sm" data-review onClick={() => setReviewing(v)}>
+                      <Pencil className="size-3.5" /> Review
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <ReviewDialog venue={reviewing} open={Boolean(reviewing)} onOpenChange={(o) => !o && setReviewing(null)} />
+    </>
   );
 }
 
@@ -557,7 +702,7 @@ export default function Admin() {
     overview: ['Overview', 'Shared database and subscriber snapshot'],
     venues: ['Venue database', `${state.venues.length} rows · edits are live for every subscriber`],
     import: ['Import spreadsheet', 'Seed or top up the master database from CSV'],
-    submissions: ['Submissions', 'Venues suggested by subscribers'],
+    submissions: ['Submissions', `${plural(pendingSubmissions().length, 'venue')} waiting on review before subscribers see them`],
     users: ['Users', `${plural(state.users.length, 'account')} on this deployment`],
   };
 

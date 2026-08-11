@@ -1,6 +1,6 @@
 # Where GigFinder stands
 
-Last updated: 10 August 2026. Branch: `claude/gigbook-web-app-6tpcs3`.
+Last updated: 11 August 2026. Branch: `claude/gigbook-web-app-6tpcs3`.
 
 Read this first when picking the project back up — state, decisions already made, and the
 questions still open.
@@ -10,7 +10,7 @@ questions still open.
 ```bash
 npm install
 npm run dev     # http://localhost:5173
-npm test        # builds, then drives the whole app in Chromium (21 steps)
+npm test        # builds, then drives the whole app in Chromium (27 steps)
 ```
 
 Stack: React + Vite + Tailwind v4 + shadcn/ui, hash routing, state in `localStorage`.
@@ -48,7 +48,12 @@ rewritten — that logic was already proven, so only the presentation layer is n
 - Basic keeps the EPK generator's Biography section, because the booking email is written
   from its short bio.
 - Venues added by a subscriber are either private, or submitted to the shared database for
-  admin approval.
+  admin approval. Three calls on the review flow, made when it was built out properly:
+  a declined submission is **kept, not deleted**, with a required reason the submitter sees —
+  otherwise the same venue comes back next week; **approve publishes the admin's edited
+  form**, so a useful room with a missing email is corrected rather than bounced; and
+  duplicates are flagged on both sides, matched on name + suburb against venues that account
+  can see (never another user's private rows).
 
 ## Open questions
 

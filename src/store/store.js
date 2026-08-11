@@ -259,26 +259,100 @@ export function upsertVenue(venue) {
 }
 
 // visibility: 'private' keeps the venue to this account (live immediately);
-// 'shared' submits it to the master database for admin review.
+// 'shared' submits it to the master database, where it waits for admin review.
 export function addVenue(data, visibility = 'private') {
   const user = currentUser();
   const shared = visibility === 'shared';
   const venue = {
     id: uid('ven'),
-    name: '', city: '', state: '', country: 'USA',
-    lat: 0, lng: 0, capacity: 0, type: 'Club', genres: [],
+    name: '', city: '', state: 'VIC', country: 'Australia',
+    lat: 0, lng: 0, capacity: 0, type: 'Pub', genres: [],
     contactName: '', contactEmail: '', phone: '', website: '',
     submissionMethod: 'Email', payType: '', notes: '',
     ...data,
     visibility: shared ? 'shared' : 'private',
     ownerId: shared ? null : user?.id || null,
     status: shared ? 'pending' : 'active',
+    // Who sent it in, so they can be told what happened to it.
+    submittedBy: shared ? user?.id || null : null,
+    submittedByEmail: shared ? user?.email || '' : '',
+    review: shared ? { state: 'pending', reason: '', at: null, by: '' } : null,
     source: shared ? `submitted by ${user?.email || 'a subscriber'}` : `private · ${user?.email || ''}`,
     addedAt: new Date().toISOString(),
   };
   state.venues.push(venue);
   save();
   return venue;
+}
+
+/** The current artist's own submissions, whatever state they're in. */
+export function mySubmissions() {
+  const me = currentUser()?.id;
+  if (!me) return [];
+  return state.venues
+    .filter((v) => v.submittedBy === me && ['pending', 'rejected'].includes(v.status))
+    .sort((a, b) => new Date(b.addedAt) - new Date(a.addedAt));
+}
+
+/** The admin review queue. */
+export function pendingSubmissions() {
+  return state.venues
+    .filter((v) => v.status === 'pending')
+    .sort((a, b) => new Date(a.addedAt) - new Date(b.addedAt));
+}
+
+/**
+ * Is this venue already in the database? Checked when a subscriber submits and again
+ * in the review queue, so an admin isn't relying on recognising the name by eye.
+ *
+ * Searches what the current account can actually see, not every row — otherwise typing
+ * a name would quietly confirm the existence of someone else's private venue.
+ */
+export function findDuplicateVenue({ name, city }, excludeId = null) {
+  const n = String(name || '').trim().toLowerCase();
+  const c = String(city || '').trim().toLowerCase();
+  if (!n) return null;
+  return activeVenues().find((v) => (
+    v.id !== excludeId
+    && v.name.trim().toLowerCase() === n
+    && (!c || v.city.trim().toLowerCase() === c)
+  )) || null;
+}
+
+/** Publish a submission to everyone, optionally with the admin's corrections. */
+export function approveVenue(id, patch = {}) {
+  const venue = venueById(id);
+  if (!venue) return null;
+  Object.assign(venue, patch, {
+    status: 'active',
+    visibility: 'shared',
+    review: { state: 'approved', reason: '', at: new Date().toISOString(), by: currentUser()?.email || 'admin' },
+  });
+  save();
+  return venue;
+}
+
+/**
+ * Decline a submission. The row is kept rather than deleted so the submitter can see
+ * what happened and why, and so the same venue isn't submitted again next week.
+ */
+export function rejectVenue(id, reason = '') {
+  const venue = venueById(id);
+  if (!venue) return null;
+  Object.assign(venue, {
+    status: 'rejected',
+    review: { state: 'rejected', reason: String(reason || '').trim(), at: new Date().toISOString(), by: currentUser()?.email || 'admin' },
+  });
+  save();
+  return venue;
+}
+
+/** The submitter clearing a declined submission from their own list. */
+export function dismissSubmission(id) {
+  const venue = venueById(id);
+  if (!venue || venue.status !== 'rejected' || venue.submittedBy !== currentUser()?.id) return;
+  state.venues = state.venues.filter((v) => v.id !== id);
+  save();
 }
 
 export function deleteVenue(id) {
