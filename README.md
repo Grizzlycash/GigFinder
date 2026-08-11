@@ -107,6 +107,47 @@ a paying user. Limits live in one place (`plan()`, `can()`, `sendsRemaining()` i
 `src/store/store.js`). Prices are in **AUD** — `money()` in `src/lib/format.js` formats
 everything through `Intl.NumberFormat('en-AU')`, so changing currency is one line.
 
+## Drafting the booking email
+
+`src/lib/draft.js` is the seam between "the app writes the email" and "a model writes the
+email". Today everything runs on-device; connecting a backend is one function call.
+
+**The privacy boundary is the point of the module.** The booking contact's name and email
+address never enter the payload — they belong to a third party who never agreed to be
+processed by a model vendor. Drafts carry a literal `{contact}` placeholder and the browser
+substitutes the real name for display only. Editing the draft and then rewriting it
+re-redacts first, so a name typed into the body can't escape either. `test/draft.test.mjs`
+asserts all of this; it fails if someone widens the payload without meaning to.
+
+The artist's bio *is* sent (when a provider is connected) — it's their own marketing copy,
+written to be read by strangers.
+
+To connect a real model, register a provider once at startup:
+
+```js
+import { setDraftProvider } from '@/lib/draft';
+
+setDraftProvider(async ({ payload, action, tone, text, signal }) => {
+  const res = await fetch('/api/draft', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ payload, action, tone, text }),
+    signal,
+  });
+  if (!res.ok) throw new Error(`draft failed: ${res.status}`);
+  return (await res.json()).text;   // must keep {contact} intact
+});
+```
+
+Your backend holds the API key — never this bundle. If the provider is absent, errors or
+returns empty, drafting falls back to the deterministic on-device version, so the app keeps
+working offline and when the model is down. Results are cached per venue + bio + action, and
+the cache clears when the provider changes.
+
+Rewrites (`Tighten`, `Warm it up`, `Shorten`, `Personalise`) act on the draft that already
+exists rather than generating from scratch — consistency is the product's promise, and the
+first draft should never be a dice roll. They're gated to Pro (`can('aiRewrite')`).
+
 ## Data
 
 State is in `localStorage` under `gigfinder:v1` — nothing leaves the browser. `store.js` is

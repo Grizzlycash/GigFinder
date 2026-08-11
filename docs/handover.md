@@ -52,10 +52,13 @@ rewritten — that logic was already proven, so only the presentation layer is n
 
 ## Open questions
 
-1. **The "AI booking email generator".** The brief names it; the app generates drafts
-   locally from the artist's own bio with three tone presets, and says so on screen. If you
-   want a real model call, `composeBody()` in `src/routes/SendEpk.jsx` is the single seam —
-   but decide whether artist bios should leave the device.
+1. **Connect a model provider when you have a backend.** The seam is built
+   (`src/lib/draft.js`); rewrites currently run on-device. Decision taken: the artist's bio
+   may be sent, the booking contact's name and email may not — they're a third party's
+   personal information. See the README section for the `setDraftProvider()` contract. Still
+   to do on your side: the endpoint, the provider's zero-retention/no-training settings, a
+   rate limit, and a line in the privacy policy. Rewrites are gated to Pro but deliberately
+   **not advertised on the pricing cards** until a model is actually connected.
 2. **Seed data.** The 79 Melbourne venues are fictional with `example.com` addresses. Import
    the real 222-venue spreadsheet through Admin → Import spreadsheet (CSV; it guesses the
    column mapping and de-duplicates on name + suburb).

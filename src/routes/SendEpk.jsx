@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Send, RefreshCw, Pencil, Lock, AlertTriangle } from 'lucide-react';
+import {
+  Send, RefreshCw, Pencil, Lock, AlertTriangle, Sparkles, ShieldCheck, Loader2,
+} from 'lucide-react';
 import {
   activeVenues, venueById, myEpks, defaultEpk, epkById, currentUser, state,
-  recordSend, outreachForVenue, sendsRemaining, plan, isPro, normaliseEpk,
+  recordSend, outreachForVenue, sendsRemaining, plan, isPro, normaliseEpk, can,
 } from '@/store/store';
+import {
+  TONES, REWRITES, buildPayload, draftEmail, redactContact, applyContact,
+  previewTransmission, hasDraftProvider,
+} from '@/lib/draft';
 import AppShell from '@/components/AppShell';
 import { Stamp } from '@/components/Stamp';
 import { Button } from '@/components/ui/button';
@@ -14,68 +20,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { relTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
-
-const TONES = [
-  { id: 'straight', label: 'Straight up' },
-  { id: 'warm', label: 'Warm' },
-  { id: 'short', label: 'Short' },
-];
-
-function firstName(name) {
-  return String(name || '').trim().split(/\s+/)[0] || 'there';
-}
 
 export function fillTemplate(template, { user, venue }) {
   return String(template)
     .replaceAll('{artist}', user.artistName || 'Artist')
     .replaceAll('{venue}', venue?.name || 'your venue')
     .replaceAll('{city}', venue?.city || '');
-}
-
-/**
- * Builds the booking email from the selected EPK. Deterministic and local — the tone
- * presets swap the framing around the artist's own short bio rather than rewriting it.
- */
-export function composeBody({ user, venue, epk, settings, tone = 'straight' }) {
-  const music = epk?.music || {};
-  const bio = epk?.shortBio || 'Add a short bio to your EPK and it will appear here.';
-  const tracks = (epk?.tracks || []).filter((t) => t.url).slice(0, 2);
-  const primary = music.spotify || music.bandcamp || music.soundcloud || music.appleMusic;
-  const lines = [];
-
-  lines.push(`Hi ${firstName(venue?.contactName)},`);
-  lines.push('');
-
-  if (tone === 'warm') {
-    lines.push(`Big fan of what you've been putting on at ${venue?.name || 'the venue'} — it's exactly the kind of room we want to play.`);
-    lines.push('');
-  }
-  if (tone === 'short') {
-    lines.push(`${user.artistName || 'We'} would love a date at ${venue?.name || 'your venue'}.`);
-    lines.push('');
-  }
-
-  lines.push(bio);
-  lines.push('');
-
-  if (tracks.length) tracks.forEach((t) => lines.push(`${t.title || 'Listen'}: ${t.url}`));
-  else if (primary) lines.push(`Listen: ${primary}`);
-  if (music.youtube && tone !== 'short') lines.push(`Live video: ${music.youtube}`);
-
-  if (tone !== 'short') {
-    lines.push('');
-    lines.push(`We'd love to be considered for a date at ${venue?.name || 'your venue'}${
-      user.drawSize ? `. We usually pull ${user.drawSize.toLowerCase()} in-market` : ''
-    }. Full EPK, photos and press are attached.`);
-  }
-
-  lines.push('');
-  lines.push(tone === 'warm' ? 'Thanks so much for your time,' : 'Thanks for your time,');
-  lines.push(user.realName || user.artistName || '');
-  if (settings.signature) lines.push(settings.signature);
-  return lines.join('\n');
 }
 
 function Step({ n, title, sub, aside, children }) {
@@ -98,6 +51,25 @@ function Step({ n, title, sub, aside, children }) {
   );
 }
 
+function ChipButton({ active, disabled, children, ...props }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      disabled={disabled}
+      className={cn(
+        'rounded-[2px] border px-2.5 py-1 font-display uppercase tracking-[0.08em] text-[0.68rem] transition-colors',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flash-red',
+        'disabled:cursor-not-allowed disabled:opacity-45',
+        active ? 'border-flash-red bg-flash-red text-[#fbf7ec]' : 'border-paper-line text-paper-muted hover:bg-paper-shade',
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function SendEpk() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -112,19 +84,48 @@ export default function SendEpk() {
 
   const remaining = sendsRemaining();
   const prior = venue ? outreachForVenue(venue.id) : null;
+  const canRewrite = can('aiRewrite');
 
   const [tone, setTone] = useState('straight');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [to, setTo] = useState('');
+  const [busy, setBusy] = useState(null);
+  const [disclosure, setDisclosure] = useState(false);
 
-  // Regenerate whenever the venue, kit or tone changes — the draft is derived, not typed.
+  const payload = useMemo(
+    () => (venue && epk ? buildPayload({ user, venue, epk }) : null),
+    [venueId, epkId, user, venue, epk],
+  );
+
+  // The draft is derived from the venue, the kit and the tone — not typed from scratch.
   useEffect(() => {
-    if (!venue || !epk) return;
+    if (!venue || !epk || !payload) return;
+    let cancelled = false;
     setSubject(fillTemplate(state.settings.defaultSubject, { user, venue }));
-    setBody(composeBody({ user, venue, epk, settings: state.settings, tone }));
     setTo(venue.contactEmail || '');
+    draftEmail({ payload, tone }).then(({ text }) => {
+      if (cancelled) return;
+      setBody(applyContact(text, venue.contactName));
+    });
+    return () => { cancelled = true; };
   }, [venueId, epkId, tone]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function rewrite(action) {
+    if (!canRewrite) { toast('Rewrites are a Pro feature'); navigate('/pricing'); return; }
+    setBusy(action);
+    try {
+      // Strip the contact's name back out before the text goes anywhere.
+      const redacted = redactContact(body, venue.contactName);
+      const { text, source: from } = await draftEmail({ payload, action, text: redacted });
+      setBody(applyContact(text, venue.contactName));
+      if (from === 'local' && hasDraftProvider()) toast('Model unavailable — rewrote on-device instead');
+    } catch {
+      toast.error("Couldn't rewrite that draft");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   if (!epks.length) {
     return (
@@ -182,10 +183,10 @@ export default function SendEpk() {
             </SelectContent>
           </Select>
           {prior && (
-            <p className="mt-3 flex items-start gap-2 border-l-2 border-stamp-emailed bg-stamp-emailed/10 px-3 py-2 text-[0.78rem] text-paper-ink">
-              <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-stamp-emailed" />
-              You already contacted {venue.name} {relTime(prior.sentAt)} — currently{' '}
-              <Stamp status={prior.status} seed={prior.id} className="mx-1 -my-0.5" />. Sending again logs a second entry.
+            <p className="mt-3 flex flex-wrap items-center gap-1.5 border-l-2 border-stamp-emailed bg-stamp-emailed/10 px-3 py-2 text-[0.78rem] text-paper-ink">
+              <AlertTriangle className="size-3.5 shrink-0 text-stamp-emailed" />
+              You already contacted {venue.name} {relTime(prior.sentAt)} — currently
+              <Stamp status={prior.status} seed={prior.id} />. Sending again logs a second entry.
             </p>
           )}
         </Step>
@@ -223,16 +224,17 @@ export default function SendEpk() {
         <Step
           n={5}
           title="The message"
-          sub="Generated from your EPK short bio. Edit freely — this send keeps its own copy."
+          sub="Built from your EPK short bio. Edit freely — this send keeps its own copy."
           aside={
             <Button
               type="button"
               variant="ghost-paper"
               size="sm"
-              onClick={() => {
-                setBody(composeBody({ user, venue, epk, settings: state.settings, tone }));
+              disabled={Boolean(busy)}
+              onClick={() => draftEmail({ payload, tone }).then(({ text }) => {
+                setBody(applyContact(text, venue.contactName));
                 toast('Draft rebuilt from your EPK');
-              }}
+              })}
               data-reset
             >
               <RefreshCw className="size-3.5" /> Rebuild
@@ -242,25 +244,54 @@ export default function SendEpk() {
           <div className="mb-2 flex flex-wrap items-center gap-1.5">
             <span className="eyebrow text-paper-muted">Tone</span>
             {TONES.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTone(t.id)}
-                aria-pressed={tone === t.id}
-                className={cn(
-                  'rounded-[2px] border px-2.5 py-1 font-display uppercase tracking-[0.08em] text-[0.68rem]',
-                  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-flash-red',
-                  tone === t.id ? 'border-flash-red bg-flash-red text-[#fbf7ec]' : 'border-paper-line text-paper-muted hover:bg-paper-shade',
-                )}
-              >
+              <ChipButton key={t.id} active={tone === t.id} disabled={Boolean(busy)} onClick={() => setTone(t.id)}>
                 {t.label}
-              </button>
+              </ChipButton>
             ))}
           </div>
-          <Textarea name="body" required rows={16} value={body} onChange={(e) => setBody(e.target.value)} data-body className="font-sans" />
-          <p className="mt-2 text-[0.72rem] text-paper-muted">
-            Drafted on your device from your own bio — no text is sent anywhere until you hit send.
-          </p>
+
+          <Textarea name="body" required rows={16} value={body} onChange={(e) => setBody(e.target.value)} data-body />
+
+          {/* ---- Rewrites ---- */}
+          <div className="mt-3 rounded-[3px] border border-paper-line bg-paper-shade/60 p-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="eyebrow flex items-center gap-1.5 text-paper-muted">
+                <Sparkles className="size-3.5" /> Rewrite
+              </span>
+              {REWRITES.map((r) => (
+                <ChipButton
+                  key={r.id}
+                  title={r.hint}
+                  disabled={Boolean(busy) || !canRewrite}
+                  onClick={() => rewrite(r.id)}
+                  data-rewrite={r.id}
+                >
+                  {busy === r.id ? <Loader2 className="mr-1 inline size-3 animate-spin" /> : null}
+                  {r.label}
+                </ChipButton>
+              ))}
+              {!canRewrite && (
+                <Link to="/pricing" className="font-display uppercase tracking-[0.08em] text-[0.68rem] text-flash-red hover:underline">
+                  Pro
+                </Link>
+              )}
+            </div>
+
+            <p className="mt-2 flex flex-wrap items-center gap-1 text-[0.72rem] text-paper-muted">
+              <ShieldCheck className="size-3.5 shrink-0 text-flash-green" />
+              {hasDraftProvider()
+                ? 'Your bio and this room\'s public details are sent to draft this. The contact\'s name and address never leave your device.'
+                : 'Rewrites run on your device — nothing is sent anywhere.'}
+              <button
+                type="button"
+                onClick={() => setDisclosure(true)}
+                className="underline underline-offset-2 hover:text-flash-red focus-visible:outline-2 focus-visible:outline-flash-red"
+                data-disclosure
+              >
+                See exactly what gets sent
+              </button>
+            </p>
+          </div>
         </Step>
 
         <Step n={6} title="What's attached" sub="What the venue receives with your message.">
@@ -280,9 +311,35 @@ export default function SendEpk() {
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <Button type="button" variant="ghost" onClick={() => navigate('/venues')}>Cancel</Button>
-          <Button type="submit" size="lg"><Send className="size-4" /> Send it</Button>
+          <Button type="submit" size="lg" disabled={Boolean(busy)}><Send className="size-4" /> Send it</Button>
         </div>
       </form>
+
+      {/* ---- What gets sent ---- */}
+      <Dialog open={disclosure} onOpenChange={setDisclosure}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>What gets sent</DialogTitle>
+            <DialogDescription>
+              {hasDraftProvider()
+                ? 'This is the exact request a rewrite makes. Nothing else leaves your device.'
+                : 'No model is connected, so nothing leaves your device at all. If one were connected, this is exactly what it would receive.'}
+            </DialogDescription>
+          </DialogHeader>
+          <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-[3px] border border-paper-line bg-white/60 p-3 text-[0.72rem] leading-relaxed text-paper-ink">
+            {JSON.stringify(
+              previewTransmission({ payload, action: 'tighten', tone, text: body, contactName: venue?.contactName }),
+              null,
+              2,
+            )}
+          </pre>
+          <p className="text-[0.75rem] text-paper-muted">
+            Note what's absent: the booking contact's name and email address. The draft uses a{' '}
+            <code className="text-flash-red">{'{contact}'}</code> placeholder and your browser fills in the
+            real name afterwards.
+          </p>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

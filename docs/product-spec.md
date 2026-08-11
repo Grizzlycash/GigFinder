@@ -104,8 +104,12 @@ panel and can attach a press kit built elsewhere instead.
 3. Which EPK — states that the body comes from this kit's short bio
 4. Subject line — from a template with `{artist}`, `{venue}`, `{city}` placeholders
 5. Message — **auto-populated from the EPK short bio**, greeting the booking contact by first
-   name, with track and video links, a closing ask, and the artist's signature. Freely
-   editable, with a "reset to EPK bio" escape hatch
+   name, with track and video links, a closing ask, and the artist's signature. Three tone
+   presets (straight up / warm / short) rebuild it; four rewrite actions (tighten, warm it up,
+   shorten, personalise) act on the current draft. Freely editable, with a "rebuild" escape
+   hatch. Rewrites run on-device unless a model provider is connected; either way the booking
+   contact's name and address never leave the browser, and a "what gets sent" disclosure shows
+   the exact payload
 6. Attached press kit — what the venue receives
 
 Sending writes an outreach record holding its own copy of the sent email, so later EPK edits

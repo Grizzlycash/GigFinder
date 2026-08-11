@@ -170,14 +170,30 @@ await step('EPK — Basic sees the Pro sections locked', async () => {
 await step('email generator — body from the short bio', async () => {
   await page.goto(`${BASE}/#/send`, { waitUntil: 'networkidle' });
   await page.waitForSelector('[data-send]');
+  await page.waitForFunction(() => document.querySelector('[data-body]')?.value.length > 40);
   const body = await page.inputValue('[data-body]');
   if (!body.includes('garage rock')) throw new Error('email body not populated from EPK short bio');
+  if (body.includes('{contact}')) throw new Error('placeholder was not substituted for display');
   // Tone presets must actually change the draft
   await page.getByRole('button', { name: 'Warm', exact: true }).click();
-  await page.waitForTimeout(200);
+  await page.waitForTimeout(300);
   const warm = await page.inputValue('[data-body]');
   if (warm === body) throw new Error('tone preset did not change the draft');
   await shot('10-send');
+});
+
+await step('rewrites are Pro-gated on Basic', async () => {
+  const disabled = await page.getAttribute('[data-rewrite="tighten"]', 'disabled');
+  if (disabled === null) throw new Error('rewrite should be disabled on Basic');
+});
+
+await step('disclosure never shows the contact', async () => {
+  await page.click('[data-disclosure]');
+  await page.waitForSelector('[role=dialog]');
+  const shown = await page.textContent('[role=dialog]');
+  if (/Sarah|Tom |Jess |bookings@/.test(shown)) throw new Error('disclosure leaked contact details');
+  await shot('18-disclosure');
+  await page.keyboard.press('Escape');
   await page.click('[data-send] button[type=submit]');
   await page.waitForSelector('table, [data-card]');
 });
@@ -211,6 +227,18 @@ await step('pricing — annual maths, upgrade to Pro', async () => {
   await shot('12-pricing');
   await page.click('[data-choose="pro"]');
   await page.waitForTimeout(300);
+});
+
+await step('rewrites work once on Pro', async () => {
+  await page.goto(`${BASE}/#/send`, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => document.querySelector('[data-body]')?.value.length > 40);
+  const before = await page.inputValue('[data-body]');
+  await page.click('[data-rewrite="personalise"]');
+  await page.waitForTimeout(400);
+  const after = await page.inputValue('[data-body]');
+  if (after === before) throw new Error('rewrite did not change the draft');
+  if (after.includes('{contact}')) throw new Error('placeholder leaked into the visible draft');
+  await shot('19-rewrite');
 });
 
 await step('EPK generator unlocked on Pro', async () => {
