@@ -66,7 +66,9 @@ const server = await startPreview();
 
 const errors = [];
 const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
+// An explicit context so clipboard permissions can be granted for the feedback check.
+const context = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+const page = await context.newPage();
 
 page.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`); });
 page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
@@ -81,6 +83,11 @@ await step('landing loads', async () => {
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForSelector('#su-artist');
   await shot('01-landing');
+});
+
+await step('the build is marked noindex', async () => {
+  const robots = await page.getAttribute('meta[name=robots]', 'content');
+  if (!/noindex/.test(robots || '')) throw new Error(`missing noindex: ${robots}`);
 });
 
 await step('sign up', async () => {
@@ -119,6 +126,23 @@ await step('onboarding 4 — plan', async () => {
   await shot('04-onboarding-plan');
   await page.click('[data-step-form] button[type=submit]');
   await page.waitForSelector('[data-tile]');
+});
+
+await step('the prototype notice states what is not real', async () => {
+  await page.waitForSelector('[data-notice-ack]');
+  const notice = await page.textContent('[role=dialog]');
+  for (const claim of [/No email is ever sent/i, /venues may be made up/i, /lives in this browser/i]) {
+    if (!claim.test(notice)) throw new Error(`notice is missing a disclosure: ${claim}`);
+  }
+  await shot('23-prototype-notice');
+  await page.click('[data-notice-ack]');
+  await page.waitForTimeout(300);
+  if (await page.locator('[data-prototype]').count() === 0) throw new Error('no standing prototype marker');
+
+  // Acknowledged once, not on every page load.
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(500);
+  if (await page.locator('[data-notice-ack]').count() !== 0) throw new Error('notice reappeared after acknowledgement');
 });
 
 await step('dashboard', async () => {
@@ -438,6 +462,52 @@ await step('admin — CSV import', async () => {
   await page.waitForTimeout(400);
   if (await page.locator('table tbody tr').count() !== 1) throw new Error('imported venue not found');
   await shot('18-admin-venues');
+});
+
+await step('the send screen says nothing is actually emailed', async () => {
+  await page.goto(`${BASE}/#/send`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('[data-simulated]');
+  const warning = await page.textContent('[data-simulated]');
+  if (!/Nothing is actually emailed/i.test(warning)) throw new Error('send screen does not disclose the simulation');
+});
+
+await step('a tester can export their round', async () => {
+  await page.goto(`${BASE}/#/settings`, { waitUntil: 'networkidle' });
+  const wait = page.waitForEvent('download', { timeout: 30000 });
+  await page.click('[data-export-state]');
+  const download = await wait;
+  const dump = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
+  if (dump.app !== 'gigfinder') throw new Error('export is not tagged as a GigFinder file');
+  if (!Array.isArray(dump.state?.venues) || !dump.state.venues.length) throw new Error('export carries no venues');
+  if (!dump.state.outreach.length) throw new Error('export carries no outreach — the point is seeing what they did');
+});
+
+await step('feedback captures the screen it was raised on', async () => {
+  await page.goto(`${BASE}/#/venues`, { waitUntil: 'networkidle' });
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.click('[data-feedback]');
+  await page.waitForTimeout(400);
+  const report = await page.evaluate(() => navigator.clipboard.readText());
+  if (!/#\/venues/.test(report)) throw new Error(`report does not name the screen: ${report}`);
+  if (!/Browser:/.test(report)) throw new Error('report carries no diagnostics');
+});
+
+await step('admin can clear the sample venues for good', async () => {
+  await page.goto(`${BASE}/#/admin/venues`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('[data-remove-samples]');
+  page.once('dialog', (d) => d.accept());
+  await page.click('[data-remove-samples]');
+  await page.waitForTimeout(600);
+  if (await page.locator('[data-remove-samples]').count() !== 0) throw new Error('sample venues survived the purge');
+
+  // The seed used to be topped back up on every load — deletion has to stick.
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(600);
+  const resurrected = await page.evaluate(
+    () => JSON.parse(localStorage.getItem('gigfinder:v1')).venues.filter((v) => v.source === 'seed').length,
+  );
+  if (resurrected !== 0) throw new Error(`${resurrected} sample venues came back after reload`);
+  await shot('24-samples-cleared');
 });
 
 await step('mobile layout has no horizontal overflow', async () => {

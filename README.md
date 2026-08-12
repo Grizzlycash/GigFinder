@@ -15,7 +15,7 @@ npm test         # builds, then drives the whole app in Chromium
 ```
 
 React + Vite + Tailwind v4 + shadcn/ui. `npm test` builds the production bundle, serves it,
-and walks 31 steps — signup through onboarding, venue filtering, map pins, both tier states
+and walks 37 steps — signup through onboarding, venue filtering, map pins, both tier states
 of the EPK generator, a press kit edited and downloaded as a real PDF, a send, the tracker,
 the venue submission round trip, the admin CSV import — failing on any console
 or page error. It also asserts there's a visible keyboard focus ring and no horizontal
@@ -104,6 +104,7 @@ src/
 test/smoke.mjs       end-to-end browser suite
 docs/design-brief.md the visual brief — source of truth for the look
 docs/handover.md     state, decisions, open questions
+docs/test-round.md   putting it in front of testers
 docs/product-spec.md behaviour spec
 docs/mockups/        earlier HTML mockups (superseded by the brief)
 ```
@@ -250,6 +251,13 @@ than duplicate.
 Pages → Source: GitHub Actions** once, and it deploys to
 `https://grizzlycash.github.io/GigFinder/`. The build uses `base: './'`, so it also works
 from any subpath or a plain static host.
+
+## Running a test round
+
+`docs/test-round.md` covers it. In short: `src/config.js` holds `PROTOTYPE`,
+`FEEDBACK_EMAIL` and `BUILD_LABEL`; testers get a first-run notice, a standing prototype
+stamp, a feedback button and a JSON export of their whole round; and Admin → Venue database
+clears the shipped sample venues for good once real ones are imported.
 
 ## Known prototype boundaries
 

@@ -1,6 +1,6 @@
 # Where GigFinder stands
 
-Last updated: 12 August 2026. Branch: `claude/gigbook-web-app-6tpcs3`.
+Last updated: 12 August 2026 (test-round prep). Branch: `claude/gigbook-web-app-6tpcs3`.
 
 Read this first when picking the project back up — state, decisions already made, and the
 questions still open.
@@ -10,7 +10,7 @@ questions still open.
 ```bash
 npm install
 npm run dev     # http://localhost:5173
-npm test        # builds, then drives the whole app in Chromium (31 steps)
+npm test        # builds, then drives the whole app in Chromium (37 steps)
 ```
 
 Stack: React + Vite + Tailwind v4 + shadcn/ui, hash routing, state in `localStorage`.
@@ -78,6 +78,22 @@ Calls made while building it:
   form**, so a useful room with a missing email is corrected rather than bounced; and
   duplicates are flagged on both sides, matched on name + suburb against venues that account
   can see (never another user's private rows).
+
+## Handing it to testers
+
+See `docs/test-round.md`. The app now says what it is — a first-run notice, a sidebar stamp
+and a line by the send button — because sending is convincing enough that a tester could
+believe they had emailed a venue. Testers export their round as JSON and send it back;
+there's no backend, so that file is the only way to see what they did.
+
+`src/config.js` is the whole switchboard: `PROTOTYPE`, `FEEDBACK_EMAIL` (empty by default —
+this repo is public and addresses get scraped; empty means the feedback button copies to the
+clipboard instead) and `BUILD_LABEL`.
+
+**Sample venues.** Admin → Venue database can now purge the shipped fictional rows for good,
+and `load()` no longer resurrects them. But they ship in `src/data/venues.js`, so clearing
+them locally does nothing for testers — the real list has to replace that file. Export the
+imported venues to CSV and swap them in before the round goes out.
 
 ## Open questions
 

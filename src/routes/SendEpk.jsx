@@ -12,6 +12,7 @@ import {
   TONES, REWRITES, buildPayload, draftEmail, redactContact, applyContact,
   previewTransmission, hasDraftProvider,
 } from '@/lib/draft';
+import { PROTOTYPE } from '@/config';
 import { printableSections, documentFilename } from '@/lib/epkDocument';
 import AppShell from '@/components/AppShell';
 import { PressKitActions, PressKitEditor, usePressKit } from '@/components/PressKit';
@@ -386,6 +387,17 @@ export default function SendEpk() {
             </div>
           )}
         </Step>
+
+        {PROTOTYPE && (
+          <p className="flex items-start gap-2 rounded-[3px] border border-ink-line bg-ink-raised px-3 py-2.5 text-[0.78rem] text-bone-muted" data-simulated>
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-stamp-emailed" />
+            <span>
+              <strong className="font-semibold text-bone">Nothing is actually emailed.</strong> This is a
+              prototype: sending records the pitch in your pipeline so you can try the flow, but{' '}
+              {venue?.name || 'the venue'} will not hear from you.
+            </span>
+          </p>
+        )}
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <Button type="button" variant="ghost" onClick={() => navigate('/venues')}>Cancel</Button>

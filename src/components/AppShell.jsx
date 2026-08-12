@@ -8,6 +8,7 @@ import { currentUser, signOut, plan, isPro, dueFollowUps, sendsRemaining, pendin
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { PrototypeNotice, PrototypeStamp, FeedbackButton } from '@/components/PrototypeNotice';
 import { initials } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -73,6 +74,7 @@ export default function AppShell({ title, subtitle, actions, admin = false, flus
 
   return (
     <div className="flex min-h-screen">
+      <PrototypeNotice />
       {/* ---- Sidebar ---- */}
       <aside
         className={cn(
@@ -92,6 +94,10 @@ export default function AppShell({ title, subtitle, actions, admin = false, flus
             <span className="block font-display text-[1.05rem] tracking-[0.06em] text-bone">GigFinder</span>
             {admin && <span className="block eyebrow text-stamp-emailed mt-0.5">Admin</span>}
           </span>
+        </div>
+
+        <div className="px-4 pb-1 pt-2.5">
+          <PrototypeStamp />
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
@@ -120,6 +126,7 @@ export default function AppShell({ title, subtitle, actions, admin = false, flus
         </nav>
 
         <div className="border-t border-ink-line p-2.5">
+          <FeedbackButton className="mb-1 w-full justify-start text-bone-muted hover:text-bone" />
           {remaining !== Infinity && (
             <p className="px-1 pb-2 text-[0.68rem] text-bone-muted">
               {remaining} of {plan().limits.sendsPerMonth} sends left this month

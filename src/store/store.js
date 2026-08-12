@@ -113,6 +113,10 @@ function defaultState() {
   return {
     version: 1,
     session: null, // user id once "signed in"
+    // When the tester acknowledged what this build is and isn't. Null until they have.
+    noticeAckAt: null,
+    // Set once the shipped sample venues are cleared, so load() stops putting them back.
+    sampleVenuesRemoved: false,
     users: [],
     venues: seedVenues(),
     epks: [],
@@ -135,8 +139,12 @@ function load() {
     const base = defaultState();
     const merged = { ...base, ...parsed, settings: { ...base.settings, ...(parsed.settings || {}) } };
     // Venues ship with the app: top up any newly-seeded rows without clobbering admin edits.
-    const byId = new Map((merged.venues || []).map((v) => [v.id, v]));
-    for (const v of base.venues) if (!byId.has(v.id)) merged.venues.push(v);
+    // Unless the sample rows have been deliberately cleared out — otherwise deleting them
+    // would silently undo itself on the next page load.
+    if (!merged.sampleVenuesRemoved) {
+      const byId = new Map((merged.venues || []).map((v) => [v.id, v]));
+      for (const v of base.venues) if (!byId.has(v.id)) merged.venues.push(v);
+    }
     return merged;
   } catch {
     return defaultState();
@@ -159,6 +167,57 @@ export function save(notify = true) {
     console.warn('GigBook: could not persist state', err);
   }
   if (notify) listeners.forEach((fn) => fn(state));
+}
+
+/* ---------- Running a test round ----------
+   There is no backend, so a tester's whole world is this one localStorage key. These are
+   the tools that make that workable: tell them what they're looking at, let them hand the
+   result back, and let staff clear the fictional venues out once real ones are loaded. */
+
+export function acknowledgeNotice() {
+  state.noticeAckAt = new Date().toISOString();
+  save();
+}
+
+/** The fictional rows that ship with the app, identified by where they came from. */
+export function sampleVenues() {
+  return state.venues.filter((v) => v.source === 'seed');
+}
+
+/**
+ * Clear the shipped sample venues, keeping anything imported, submitted or added by hand.
+ * Outreach against a removed venue goes too, or the tracker fills with dangling rows.
+ */
+export function removeSampleVenues() {
+  const doomed = new Set(sampleVenues().map((v) => v.id));
+  state.venues = state.venues.filter((v) => !doomed.has(v.id));
+  state.outreach = state.outreach.filter((o) => !doomed.has(o.venueId));
+  state.lists = state.lists.map((l) => ({ ...l, venueIds: l.venueIds.filter((id) => !doomed.has(id)) }));
+  state.sampleVenuesRemoved = true;
+  save();
+  return doomed.size;
+}
+
+/** Everything this browser holds, as a file the tester can send back. */
+export function exportState() {
+  return JSON.stringify({
+    app: 'gigfinder',
+    exportedAt: new Date().toISOString(),
+    userAgent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
+    state,
+  }, null, 2);
+}
+
+/** Load a tester's export. Replaces everything — the caller confirms first. */
+export function importState(text) {
+  const parsed = JSON.parse(text);
+  const incoming = parsed?.state && parsed.app === 'gigfinder' ? parsed.state : parsed;
+  if (!incoming || !Array.isArray(incoming.venues) || !Array.isArray(incoming.users)) {
+    throw new Error("That doesn't look like a GigFinder export");
+  }
+  localStorage.setItem(KEY, JSON.stringify(incoming));
+  location.hash = '#/';
+  location.reload();
 }
 
 export function resetAll() {

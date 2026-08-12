@@ -5,6 +5,7 @@ import { Search, Plus, Download, Upload, Check, X, Trash2, Pencil, AlertTriangle
 import {
   state, save, upsertVenue, deleteVenue, PLANS, planPrice, currentUser,
   pendingSubmissions, findDuplicateVenue, approveVenue, rejectVenue,
+  sampleVenues, removeSampleVenues,
 } from '@/store/store';
 import { VENUE_TYPES, slugify } from '@/data/venues';
 import AppShell from '@/components/AppShell';
@@ -248,6 +249,8 @@ function VenuesTab() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [q, state.venues.length]);
 
+  const samples = sampleVenues();
+
   function exportAll() {
     download('gigfinder-master-venues.csv', toCsv([
       FIELDS.map(([, label]) => label),
@@ -266,6 +269,29 @@ function VenuesTab() {
         <Button variant="secondary" size="sm" onClick={exportAll}><Download className="size-4" /> Export</Button>
         <Button size="sm" onClick={() => setEditing(null)} data-add><Plus className="size-4" /> Add venue</Button>
       </div>
+
+      {samples.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-[3px] border border-stamp-emailed/50 bg-stamp-emailed/10 px-3 py-2.5">
+          <AlertTriangle className="size-4 shrink-0 text-stamp-emailed" />
+          <p className="min-w-0 flex-1 text-[0.8rem] text-paper-ink">
+            <strong className="font-semibold">{samples.length} sample venues</strong> are still in the
+            database. They're invented, every address is <code className="text-flash-red">example.com</code>,
+            and subscribers can't tell them from real rooms. Import the real list first — this can't be undone.
+          </p>
+          <Button
+            variant="destructive"
+            size="sm"
+            data-remove-samples
+            onClick={() => {
+              if (!confirm(`Permanently delete ${samples.length} sample venues and any outreach against them?`)) return;
+              const n = removeSampleVenues();
+              toast.success(`Removed ${n} sample venues`);
+            }}
+          >
+            <Trash2 className="size-3.5" /> Remove sample venues
+          </Button>
+        </div>
+      )}
 
       <Card className="mt-3 overflow-hidden">
         <Table>

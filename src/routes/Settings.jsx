@@ -1,7 +1,10 @@
+import { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Database, Trash2 } from 'lucide-react';
-import { currentUser, updateUser, state, save, resetAll, loadDemoOutreach, isPro } from '@/store/store';
+import { Database, Trash2, Download, Upload } from 'lucide-react';
+import { currentUser, updateUser, state, save, resetAll, loadDemoOutreach, isPro, exportState, importState } from '@/store/store';
+import { PROTOTYPE } from '@/config';
+import { download } from '@/lib/format';
 import AppShell from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const DRAWS = ['Under 25', '25–50', '50–100', '100–250', '250+'];
 
 export default function Settings() {
+  const fileInput = useRef(null);
   const navigate = useNavigate();
   const user = currentUser();
   const s = state.settings;
@@ -121,7 +125,53 @@ export default function Settings() {
         <CardContent>
           <p className="text-[0.82rem] text-paper-muted">
             This prototype keeps everything in your browser's local storage — nothing leaves the device.
+            There's no account and no server, so clearing site data or switching browser loses it.
           </p>
+
+          {PROTOTYPE && (
+            <div className="mt-3 rounded-[3px] border border-paper-line bg-paper-shade/60 p-3">
+              <p className="text-[0.82rem] text-paper-ink">
+                <strong className="font-semibold">Finished testing?</strong> Download your data and send
+                the file back — it's the only way for anyone else to see what you built.
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  data-export-state
+                  onClick={() => {
+                    download(`gigfinder-test-data-${new Date().toISOString().slice(0, 10)}.json`, exportState());
+                    toast.success('Downloaded', { description: 'Send that file back with your notes.' });
+                  }}
+                >
+                  <Download className="size-4" /> Download my test data
+                </Button>
+                <Button variant="paper" size="sm" onClick={() => fileInput.current?.click()}>
+                  <Upload className="size-4" /> Load a test file
+                </Button>
+              </div>
+              <p className="mt-2 text-[0.72rem] text-paper-muted">
+                Loading a file replaces everything in this browser — it's for reviewing someone else's
+                round, not for merging.
+              </p>
+              <input
+                ref={fileInput}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                data-import-state
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!file) return;
+                  if (!confirm('Replace everything in this browser with that file?')) return;
+                  file.text()
+                    .then((text) => importState(text))
+                    .catch((err) => toast.error('Could not load that file', { description: err.message }));
+                }}
+              />
+            </div>
+          )}
+
           <div className="mt-3 flex flex-wrap gap-2">
             <Button variant="paper" size="sm" data-demo onClick={() => { loadDemoOutreach(); toast.success('Sample pipeline loaded'); navigate('/outreach'); }}>
               <Database className="size-4" /> Load sample pipeline
