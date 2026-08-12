@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Search, Plus, Download, Star, Map as MapIcon, Mail, ExternalLink, X, AlertTriangle } from 'lucide-react';
+import { Search, Plus, Download, Star, Map as MapIcon, MapPin, Mail, ExternalLink, X, AlertTriangle } from 'lucide-react';
 import {
   activeVenues, venueById, outreachForVenue, myOutreach, STATUSES, setOutreachStatus,
   updateOutreach, isPro, myLists, createList, toggleListVenue, can, addVenue, myPrivateVenues,
@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { fmtDateTime, plural, toCsv, download, initials } from '@/lib/format';
+import { fmtDateTime, plural, toCsv, download, initials, mapsUrl } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const SIZES = [
@@ -339,10 +339,15 @@ function DetailPanel({ venue, onSaveToList }) {
                 <Star className="size-4" /> Save to list
               </Button>
             )}
+            <Button variant="paper" size="sm" asChild>
+              <a href={mapsUrl(venue)} target="_blank" rel="noopener" data-maps-link>
+                <MapPin className="size-4" /> Open in Maps
+              </a>
+            </Button>
             {/* Boolean(), not the raw numbers: a venue at 0,0 renders a literal "0" otherwise. */}
             {Boolean(venue.lat || venue.lng) && (
               <Button variant="paper" size="sm" asChild>
-                <Link to={`/map?venue=${venue.id}`}><MapIcon className="size-4" /> Map</Link>
+                <Link to={`/map?venue=${venue.id}`}><MapIcon className="size-4" /> On our map</Link>
               </Button>
             )}
           </div>

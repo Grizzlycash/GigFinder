@@ -165,6 +165,16 @@ await step('venues — flash sheet, filters, detail', async () => {
   await page.waitForTimeout(200);
   await page.click('.stub >> nth=2');
   await page.waitForTimeout(300);
+
+  // Works whether or not anyone has geocoded the database — it's built from the address.
+  const maps = await page.getAttribute('[data-maps-link]', 'href');
+  if (!/^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/.test(maps || '')) {
+    throw new Error(`no Google Maps link on the venue: ${maps}`);
+  }
+  const name = (await page.textContent('[data-panel-name], h2')) || '';
+  if (!decodeURIComponent(maps).includes(name.trim())) {
+    throw new Error(`maps link does not name the venue: ${decodeURIComponent(maps)}`);
+  }
   await shot('06-venues');
 });
 

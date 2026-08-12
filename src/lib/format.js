@@ -63,6 +63,26 @@ export function milesBetween(a, b) {
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
+/**
+ * A Google Maps link for a venue, built from what the spreadsheet already has.
+ *
+ * This is not a substitute for `lat`/`lng`: the in-app map plots its own pins and needs
+ * numbers. What this does is answer "where actually is this, and how do I get there" without
+ * geocoding anything — Google's search resolves a name plus a street address better than any
+ * geocoder we'd run ourselves, and the artist lands on the venue's real listing with
+ * directions, hours and street view.
+ *
+ * Searching on name *and* address is deliberate. The address alone drops a pin on a
+ * building; the name gets the business card.
+ */
+export function mapsUrl(venue) {
+  if (!venue) return '';
+  const query = [venue.name, venue.address || [venue.city, venue.state].filter(Boolean).join(' ')]
+    .filter(Boolean)
+    .join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
 export function download(filename, text, mime = 'text/csv') {
   const blob = new Blob([text], { type: `${mime};charset=utf-8` });
   const url = URL.createObjectURL(blob);
