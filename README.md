@@ -239,11 +239,25 @@ State is in `localStorage` under `gigfinder:v1` — nothing leaves the browser. 
 the only module that touches persistence, so swapping it for API calls is the single change
 needed to move to a real backend.
 
-**The seeded venues are fictional.** Names, contacts and addresses are invented and every
-email uses the reserved `example.com` domain. The real 222-venue spreadsheet replaces them
-via **Admin → Import spreadsheet**, which reads a CSV, guesses the column mapping from the
-headers, previews the rows, and de-duplicates on *name + suburb* so re-imports update rather
-than duplicate.
+**The venue database is real.** `src/data/venues.js` holds 222 Victorian rooms and is
+**generated** from the spreadsheet — don't hand-edit it:
+
+```bash
+node scripts/import-venues.mjs path/to/GigBook_Database.csv --geocode
+```
+
+The importer parses suburb and postcode out of the address, takes the first number in
+messy capacity strings (`"468 (Standing), 270 (Seated)"`) while keeping the full text,
+infers a venue type from the name and blurb, and limits the genre filter to tags carried by
+three or more rooms — venues keep every tag, but a genre one venue claims is a label, not a
+filter. It warns about venues entered twice instead of merging them, because choosing
+between two booking emails chooses who gets pitched.
+
+`--geocode` fills coordinates via OpenStreetMap (one request a second, cached in
+`.venue-geocode-cache.json`). Without coordinates a venue is simply left off the map.
+
+Admin → Import spreadsheet still exists for topping up the database at runtime, de-duplicating
+on *name + suburb*.
 
 ## Deploying
 

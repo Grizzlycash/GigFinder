@@ -5,16 +5,25 @@ the awkward bits.
 
 ## Before you send the link
 
-1. **Import the real venues, then clear the samples.** The seeded rooms are invented and
-   every address is `example.com`. Admin → Import spreadsheet, then Admin → Venue database →
-   **Remove sample venues**. That purge is permanent and the rows do not come back on
-   reload — which is the point, but it means doing it in the wrong order loses nothing
-   except your patience.
+1. **Check the venue data.** `src/data/venues.js` is generated from the spreadsheet by
+   `scripts/import-venues.mjs` — don't hand-edit it. To reload after the spreadsheet changes:
 
-   Sample venues live in `src/data/venues.js` and ship with the build, so **clearing them in
-   your browser does not clear them for your testers.** To hand testers the real list, export
-   it (Admin → Venue database → Export) and replace `src/data/venues.js` with it, or send the
-   CSV to whoever maintains the repo.
+   ```bash
+   node scripts/import-venues.mjs path/to/GigBook_Database.csv --geocode
+   ```
+
+   `--geocode` fills in the coordinates through OpenStreetMap, rate-limited to one request a
+   second and cached, so a re-run costs nothing. **Without it the Map screen has nothing to
+   plot** — every venue still appears in the list with its address, but a whole nav item sits
+   empty, which is a poor look in a test round.
+
+   The importer also warns about venues entered twice. It reports rather than merges: picking
+   a winner between two booking emails picks who gets pitched, and only the person who keeps
+   the spreadsheet knows which is current.
+
+   Admin → Venue database → **Remove sample venues** clears rows marked `source: 'seed'` from
+   *your* browser. It's for a stale local copy, not for the shipped data — the shipped list
+   comes from the generated file.
 
 2. **Decide where feedback goes.** `src/config.js` → `FEEDBACK_EMAIL`. Left empty, the
    feedback button copies the report to the clipboard and tells the tester to paste it to

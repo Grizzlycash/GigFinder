@@ -80,7 +80,13 @@ export default function SendEpk() {
   const epks = myEpks();
   const venues = activeVenues();
 
-  const venueId = params.get('venue') || venues[0]?.id || '';
+  // Plenty of rooms in the database take submissions through a form rather than by email.
+  // Landing on one of those with an empty "send to" box is a confusing first impression, so
+  // the default lands on a room you can actually write to.
+  const venueId = params.get('venue')
+    || venues.find((v) => v.contactEmail)?.id
+    || venues[0]?.id
+    || '';
   const epkId = params.get('epk') || defaultEpk()?.id || '';
   const venue = venueById(venueId);
   const epk = useMemo(() => normaliseEpk(epkById(epkId)), [epkId]);
@@ -231,6 +237,20 @@ export default function SendEpk() {
               <Input id="s-to" type="email" required value={to} onChange={(e) => setTo(e.target.value)} />
             </div>
           </div>
+          {!venue?.contactEmail && (
+            <p className="mt-2.5 flex flex-wrap items-center gap-1.5 border-l-2 border-stamp-emailed bg-stamp-emailed/10 px-3 py-2 text-[0.78rem] text-paper-ink" data-no-email>
+              <AlertTriangle className="size-3.5 shrink-0 text-stamp-emailed" />
+              <span>
+                No booking email on file for {venue?.name || 'this room'}
+                {venue?.submissionMethod === 'Booking form' ? ' — they take submissions through their website.' : '.'}
+              </span>
+              {venue?.website && (
+                <a href={venue.website} target="_blank" rel="noopener" className="text-flash-red hover:underline">
+                  Open their site
+                </a>
+              )}
+            </p>
+          )}
           {venue?.notes && <p className="mt-2 text-[0.75rem] text-paper-muted">{venue.notes}</p>}
         </Step>
 

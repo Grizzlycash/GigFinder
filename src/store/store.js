@@ -669,8 +669,12 @@ export function loadDemoOutreach() {
       followUpAt: ['emailed', 'opened'].includes(status) && plan().limits.followUps
         ? new Date(Date.now() + (5 - (i % 8)) * 86400000).toISOString()
         : null,
-      notes: status === 'booked' ? 'Confirmed for a Thursday support slot.' : '',
-      history: [{ at: sentAt, label: 'Email sent', detail: venue.contactEmail }],
+      // Flagged on the record itself. These are invented conversations against real rooms,
+      // and a week later "Booked — Brunswick Ballroom" is a believable thing to misremember.
+      notes: status === 'booked'
+        ? 'SAMPLE DATA — not a real booking. Confirmed for a Thursday support slot.'
+        : 'SAMPLE DATA — this conversation never happened.',
+      history: [{ at: sentAt, label: 'Email sent (sample data)', detail: venue.contactEmail }],
     });
   });
   save();

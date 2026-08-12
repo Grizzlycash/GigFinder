@@ -52,10 +52,10 @@ export function PrototypeNotice() {
           <li className="flex gap-2.5">
             <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-flash-red" />
             <span>
-              <strong className="font-semibold">The venues may be made up.</strong> Unless real
-              data has been loaded, the rooms and booking contacts are invented and every address
-              ends in <code className="text-flash-red">example.com</code>. Don&apos;t use them to
-              plan anything real.
+              <strong className="font-semibold">The venues are real, but unverified.</strong> The
+              rooms, addresses and booking emails come from a working spreadsheet — some are
+              missing, some are out of date, and none of it has been checked with the venue.
+              Treat a listing as a lead, not a confirmed contact.
             </span>
           </li>
           <li className="flex gap-2.5">

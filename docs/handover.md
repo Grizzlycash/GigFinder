@@ -90,10 +90,19 @@ there's no backend, so that file is the only way to see what they did.
 this repo is public and addresses get scraped; empty means the feedback button copies to the
 clipboard instead) and `BUILD_LABEL`.
 
-**Sample venues.** Admin → Venue database can now purge the shipped fictional rows for good,
-and `load()` no longer resurrects them. But they ship in `src/data/venues.js`, so clearing
-them locally does nothing for testers — the real list has to replace that file. Export the
-imported venues to CSV and swap them in before the round goes out.
+**Venue data.** `src/data/venues.js` is now the real database — 222 Victorian rooms,
+generated from the spreadsheet by `scripts/import-venues.mjs`. Don't hand-edit it; re-run the
+importer and commit. The fictional generator (invented names, `example.com` addresses, made-up
+booking contacts) is gone entirely.
+
+Two things the real data exposed that the fictional set never did: a venue at 0,0 rendered a
+literal `0` in the detail panel (`{(venue.lat || venue.lng) && …}` — a falsy number is not
+nothing in JSX), and 43 rooms have no booking email at all, so the send flow now defaults to
+a room you can actually write to and says so when there isn't one.
+
+**14 venues are entered twice** in the spreadsheet, with conflicting emails and capacities.
+The importer reports them rather than merging: choosing between two booking addresses chooses
+who gets pitched. Fix the spreadsheet and re-run.
 
 ## Open questions
 
@@ -104,9 +113,11 @@ imported venues to CSV and swap them in before the round goes out.
    to do on your side: the endpoint, the provider's zero-retention/no-training settings, a
    rate limit, and a line in the privacy policy. Rewrites are gated to Pro but deliberately
    **not advertised on the pricing cards** until a model is actually connected.
-2. **Seed data.** The 79 Melbourne venues are fictional with `example.com` addresses. Import
-   the real 222-venue spreadsheet through Admin → Import spreadsheet (CSV; it guesses the
-   column mapping and de-duplicates on name + suburb).
+2. **Venue coordinates.** The real 222-venue database is in (`src/data/venues.js`, generated
+   by `scripts/import-venues.mjs`), but **no row has coordinates**, so the Map screen is
+   empty. Geocoding is blocked from the build sandbox; run it once on your own machine:
+   `node scripts/import-venues.mjs <csv> --geocode`, then commit the regenerated file.
+   Do this before a test round — an empty Map is a whole nav item showing nothing.
 3. **Unadvertised Pro features.** Saved lists, CSV export and analytics work but aren't
    listed on the pricing cards, because the pricing mockup didn't list them.
 4. **GST.** Prices are now AUD but say nothing about GST. Australian SaaS usually states

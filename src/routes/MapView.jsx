@@ -134,10 +134,16 @@ export default function MapView() {
   if (!all.length) {
     return (
       <AppShell title="Map">
-        <Card className="mx-auto max-w-md"><CardContent className="py-10 text-center">
-          <p className="text-[0.9rem] text-paper-muted">No venues have coordinates yet.</p>
-          <Button asChild className="mt-3"><Link to="/venues">Venue list</Link></Button>
-        </CardContent></Card>
+        <Card className="mx-auto max-w-md" data-map-empty>
+          <CardContent className="py-10 text-center">
+            <h2 className="text-xl">Nothing to plot yet</h2>
+            <p className="mx-auto mt-2 max-w-xs text-[0.85rem] text-paper-muted">
+              None of the rooms in the database carry coordinates, so there's no map to draw. Every
+              venue is still in the list, with its address.
+            </p>
+            <Button asChild className="mt-4"><Link to="/venues">Browse the list</Link></Button>
+          </CardContent>
+        </Card>
       </AppShell>
     );
   }

@@ -314,6 +314,10 @@ function DetailPanel({ venue, onSaveToList }) {
           <p className="mt-1 text-[0.8rem] text-paper-muted">
             {venue.city}, {venue.state} · Cap. {venue.capacity || '—'} · {venue.type}
           </p>
+          {venue.capacityNote && venue.capacityNote !== String(venue.capacity) && (
+            <p className="text-[0.75rem] text-paper-muted">{venue.capacityNote}</p>
+          )}
+          {venue.address && <p className="mt-1 text-[0.78rem] text-paper-muted">{venue.address}</p>}
           <div className="mt-2.5">
             <Stamp status={outreach?.status || 'none'} seed={venue.id} size="lg" />
           </div>
@@ -335,7 +339,8 @@ function DetailPanel({ venue, onSaveToList }) {
                 <Star className="size-4" /> Save to list
               </Button>
             )}
-            {(venue.lat || venue.lng) && (
+            {/* Boolean(), not the raw numbers: a venue at 0,0 renders a literal "0" otherwise. */}
+            {Boolean(venue.lat || venue.lng) && (
               <Button variant="paper" size="sm" asChild>
                 <Link to={`/map?venue=${venue.id}`}><MapIcon className="size-4" /> Map</Link>
               </Button>
