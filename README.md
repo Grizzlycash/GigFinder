@@ -41,6 +41,21 @@ shadcn variable contract (`--background`, `--card`, `--primary`…) mapped onto 
 components follow the palette automatically. Fonts are self-hosted in `src/assets/fonts` —
 no CDN, works offline.
 
+**The ground is a wall with bills pasted to it**, in four layers, none of which any
+component has to know about:
+
+| Layer | Where |
+| --- | --- |
+| Ink in four levels — `ink-deep` spine, `ink` top bar, `ink-ground`, `ink-raised` panels | `@theme` tokens |
+| Two very wide washes, warm from above the fold, cool pooling bottom-right | `html` |
+| Torn poster sheets at slight angles | `src/assets/paste-up.svg` via `body::before` |
+| Fractal-noise grain over the lot | `body::after`, inline SVG |
+
+Both overlays are `position: fixed; z-index: -1`, so they sit above the ground and below
+every pixel of the app — paper surfaces stay clean. Nothing is fetched: the noise is an
+inline data URI and Vite inlines `paste-up.svg` too. Keep app wrappers transparent, or an
+opaque `bg-background` will cover the whole thing (which is exactly what it used to do).
+
 Two components carry the aesthetic:
 
 - **`Stamp`** — the signature element. Contact status printed as a rubber stamp, one ink per
@@ -71,7 +86,8 @@ Two components carry the aesthetic:
 
 ```
 src/
-  index.css          palette, fonts, .stamp and .stub component classes
+  index.css          palette, ground layers, fonts, .stamp and .stub classes
+  assets/paste-up.svg  the torn bills pasted to the ink ground
   App.jsx            routes + auth guards
   components/
     AppShell.jsx     sidebar, top bar, account dialog

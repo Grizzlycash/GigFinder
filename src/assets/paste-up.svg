@@ -1,0 +1,70 @@
+<!--
+  The wall the bills are pasted to.
+
+  Rectangles, not bands: the first attempt used edge-to-edge diagonal gradients and read
+  as a rendering glitch, because nothing in the world is a stripe that runs off both sides
+  of the page. These are bounded sheets at slight angles, each torn along one edge, a few
+  overlapping the way a venue's front window looks by the end of a season.
+
+  Tears are shallow (~12px against a 1600-unit width) and irregularly spaced. Deeper or
+  evenly spaced and they stop reading as paper and start reading as a chart.
+
+  Everything sits at 1.6–4.5% against the ink ground — this is the wall, not the content.
+  Drawn with `background-size: cover`, so it scales with the viewport and never tiles.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" preserveAspectRatio="xMidYMid slice">
+  <!-- Tall sheet, left. Torn along the bottom, top runs off the page. -->
+  <g transform="rotate(-5 275 280)">
+    <polygon fill="#f1ede1" opacity="0.030" points="
+      80,-80 470,-80
+      470,598 451,610 433,599 414,613 396,603 377,612 357,600 338,614 318,605 299,611
+      279,600 260,613 240,604 221,609 201,601 182,614 162,606 143,610 123,601 104,612 80,603" />
+    <polyline fill="none" stroke="#f1ede1" stroke-opacity="0.05" stroke-width="2" points="80,-80 470,-80" />
+  </g>
+
+  <!-- Red sheet through the middle, torn along the top, running off the bottom edge. -->
+  <g transform="rotate(4 750 800)">
+    <polygon fill="#b23a2e" opacity="0.045" points="
+      520,414 540,402 561,416 583,404 604,412 626,401 647,415 669,406 690,411 712,400
+      733,415 755,405 776,410 798,402 819,416 841,407 862,412 884,403 905,414 927,406
+      948,411 980,404
+      980,1300 520,1300" />
+  </g>
+
+  <!-- Right-hand sheet, torn bottom, overlapping the scrap above it. -->
+  <g transform="rotate(-3 1320 440)">
+    <polygon fill="#f1ede1" opacity="0.024" points="
+      1080,120 1560,120
+      1560,706 1539,717 1517,704 1496,718 1474,707 1453,715 1431,703 1410,717 1388,708
+      1367,714 1345,702 1324,716 1302,706 1281,713 1259,705 1238,718 1216,709 1195,714
+      1173,704 1152,717 1130,707 1109,712 1080,705" />
+    <polyline fill="none" stroke="#f1ede1" stroke-opacity="0.04" stroke-width="2" points="1080,120 1560,120" />
+  </g>
+
+  <!-- Small green bill, bottom left, pasted over the corner of the tall sheet. -->
+  <g transform="rotate(7 130 1030)">
+    <polygon fill="#3c6e52" opacity="0.042" points="
+      -60,824 320,824
+      320,1166 301,1177 281,1165 262,1179 242,1168 223,1175 203,1164 184,1178 164,1170
+      145,1176 125,1166 106,1178 86,1169 67,1174 47,1165 28,1179 8,1170 -11,1175 -31,1167 -60,1178" />
+  </g>
+
+  <!-- Half-torn scrap, top right. What's left after someone ripped one down. -->
+  <g transform="rotate(6 1350 60)">
+    <polygon fill="#f1ede1" opacity="0.020" points="
+      1180,-120 1520,-120
+      1520,192 1503,203 1485,191 1468,205 1450,194 1433,201 1415,190 1398,204 1380,196
+      1363,202 1345,192 1328,203 1310,195 1293,200 1275,191 1258,205 1240,197 1223,201
+      1205,193 1180,202" />
+  </g>
+
+  <!-- Wide, very faint sheet low down, so the bottom of a tall screen isn't bare. -->
+  <g transform="rotate(-2 800 1080)">
+    <polygon fill="#f1ede1" opacity="0.016" points="
+      420,952 442,942 465,955 487,944 510,950 532,941 555,954 577,946 600,951 622,942
+      645,956 667,947 690,952 712,943 735,955 757,946 780,950 802,942 825,954 847,947
+      870,951 892,943 915,955 937,947 960,952 982,944 1005,954 1027,946 1050,951 1072,942
+      1095,955 1117,947 1140,952 1180,944
+      1180,1300 420,1300" />
+  </g>
+</svg>

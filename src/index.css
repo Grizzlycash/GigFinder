@@ -147,10 +147,26 @@
     background: transparent;
   }
 
-  /* Printed stock, not flat charcoal. Fractal noise tiled over the ground — inline, so
-     there's no image to fetch. It sits at z-index -1: above the ground and its wash,
-     below every pixel of the app, so paper surfaces stay clean. */
+  /* Two layers of ground, both fixed, both at z-index -1: above the wash, below every
+     pixel of the app, so the paper surfaces stay clean. ::before paints first, so the
+     bills go down and the grain lies over them — the grain is the surface of the whole
+     print, not a thing sitting behind it. */
+
+  /* Bills pasted to the wall. See paste-up.svg for what's on it. */
   body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image: url("./assets/paste-up.svg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* Printed stock, not flat charcoal. Fractal noise, inline, so there's nothing to fetch. */
+  body::after {
     content: "";
     position: fixed;
     inset: 0;
