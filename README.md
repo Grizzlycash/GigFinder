@@ -255,6 +255,8 @@ between two booking emails chooses who gets pitched.
 
 `--geocode` fills coordinates via OpenStreetMap (one request a second, cached in
 `.venue-geocode-cache.json`). Without coordinates a venue is simply left off the map.
+`scripts/geocode-sheet.gs` does the same job inside Google Sheets for anyone who'd rather
+not use a terminal — the importer picks up `Latitude`/`Longitude` columns automatically.
 
 Admin → Import spreadsheet still exists for topping up the database at runtime, de-duplicating
 on *name + suburb*.

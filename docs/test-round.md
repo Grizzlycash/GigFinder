@@ -17,6 +17,11 @@ the awkward bits.
    plot** — every venue still appears in the list with its address, but a whole nav item sits
    empty, which is a poor look in a test round.
 
+   **No terminal?** `scripts/geocode-sheet.gs` does the same job inside Google Sheets: paste
+   it into Extensions → Apps Script, run *GigFinder → Fill in coordinates*, then export the
+   CSV. The importer reads `Latitude`/`Longitude` columns when they're there, so it needs no
+   `--geocode` flag afterwards.
+
    The importer also warns about venues entered twice. It reports rather than merges: picking
    a winner between two booking emails picks who gets pitched, and only the person who keeps
    the spreadsheet knows which is current.
