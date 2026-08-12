@@ -94,8 +94,8 @@ clickable.
 List of press kits (one on Basic, unlimited on Pro) with a default marker and a completion
 bar. The editor is a section rail plus a form: **Biography, Photos, Music links, Social
 media, Tech rider**, each showing a completion tick, over a progress bar reading "n of 5
-sections complete". A bottom bar carries Previous / Next: <section> and Preview EPK opens the
-assembled kit.
+sections complete". A bottom bar carries Previous / Next: <section>, and Preview EPK opens
+the press kit as it prints, with Download PDF and Rebuild from EPK.
 
 The generator is a Pro feature, with one deliberate exception: **Biography stays on Basic**,
 because the outreach email is written from its short bio and locking it would break the core
@@ -116,10 +116,20 @@ panel and can attach a press kit built elsewhere instead.
    hatch. Rewrites run on-device unless a model provider is connected; either way the booking
    contact's name and address never leave the browser, and a "what gets sent" disclosure shows
    the exact payload
-6. Attached press kit — what the venue receives
+6. **The press kit** — a PDF generated from the EPK, previewed, edited and attached
 
-Sending writes an outreach record holding its own copy of the sent email, so later EPK edits
-never rewrite history. Re-contacting a venue warns first. Hitting the Basic send cap replaces
+Step 6 is the long pitch the email deliberately isn't. The EPK's fields are flattened into
+an ordered run of titled text blocks — bio, notable shows, press, the live show, listen,
+photos, find us, rider, contact — each of which can be reworded, renamed, reordered or
+switched off before it goes out. Structured data (links, rider) prints as `Label — value`
+lines and edits as plain text. Empty blocks never print. Edits save to the EPK; **Rebuild
+from EPK** discards them and re-derives. Preview shows the assembled document and Download
+PDF produces the file, in the product's own type. Building a kit is Pro; Basic attaches a
+press kit made elsewhere.
+
+Sending writes an outreach record holding its own copy of the sent email **and of the press
+kit document**, so later EPK edits never rewrite history; the record can rebuild the exact
+PDF that was sent. Re-contacting a venue warns first. Hitting the Basic send cap replaces
 the form with an upgrade prompt.
 
 ### 3.9 Outreach tracker
@@ -159,9 +169,10 @@ access, and data controls (load sample pipeline, reset).
   (state, reason, decided-at, decided-by)
 - **EPK** — title, tagline, short bio, long bio, notable performances, genres, base city, set
   length, audience size, music links, social links, tech rider, photos, tracks, press quotes,
-  uploaded file, default flag
-- **Outreach** — venue, EPK, recipient, subject, body copy, stage, sent date, follow-up date,
-  notes, history entries
+  uploaded file, default flag, press-kit document (headline, tagline, strapline, cover photo,
+  contact block, ordered sections with include flags — null until edited, then derived no more)
+- **Outreach** — venue, EPK, recipient, subject, body copy, attachment (filename, page count
+  and the press-kit document as sent), stage, sent date, follow-up date, notes, history entries
 - **List** (Pro) — name, venue ids
 
 ## 5. Tiers
@@ -173,6 +184,7 @@ access, and data controls (load sample pipeline, reset).
 | Sends | 15/month | Unlimited |
 | Venue database, outreach tracking, upload your own EPK, private venues | ✓ | ✓ |
 | EPK generator | Biography only | Full |
+| PDF press kit | Attach your own | Generated, editable |
 | EPKs | 1 | Unlimited |
 | Follow-up reminders, saved lists, CSV export, analytics | — | ✓ |
 

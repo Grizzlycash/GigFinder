@@ -15,9 +15,9 @@ npm test         # builds, then drives the whole app in Chromium
 ```
 
 React + Vite + Tailwind v4 + shadcn/ui. `npm test` builds the production bundle, serves it,
-and walks 27 steps — signup through onboarding, venue filtering, map pins, both tier states
-of the EPK generator, a real send, the tracker, the venue submission round trip, the admin
-CSV import — failing on any console
+and walks 31 steps — signup through onboarding, venue filtering, map pins, both tier states
+of the EPK generator, a press kit edited and downloaded as a real PDF, a send, the tracker,
+the venue submission round trip, the admin CSV import — failing on any console
 or page error. It also asserts there's a visible keyboard focus ring and no horizontal
 overflow on mobile. Screenshots land in `test/screenshots/` (gitignored). Playwright is
 needed for the test only: `npm i -D playwright && npx playwright install chromium`.
@@ -60,7 +60,7 @@ Two components carry the aesthetic:
 | Venues | `/venues`, `/venues/:id` | Flash-sheet card list + detail panel |
 | Map | `/map` | Clustered pins in stamp inks, nearby rooms |
 | EPK generator | `/epk`, `/epk/:id` | Section rail: bio, photos, music, socials, rider |
-| Booking email | `/send` | Linear six-step draft, three tone presets |
+| Booking email | `/send` | Linear six-step draft, tone presets, press kit PDF |
 | Outreach (CRM) | `/outreach` | Stamped table, or a drag-and-drop board |
 | Saved lists | `/lists` | Pro — route a run of dates |
 | Plan & billing | `/pricing` | Basic / Pro, monthly or annual |
@@ -77,11 +77,14 @@ src/
     AppShell.jsx     sidebar, top bar, account dialog
     Stamp.jsx        the signature status element
     VenueCard.jsx    the ticket stub
+    PressKit.jsx     press kit preview, editor and usePressKit()
     ui/              shadcn/ui components (Radix + CVA)
   routes/            one file per screen
   store/store.js     all state, persistence and plan limits
   data/venues.js     Melbourne seed database
   lib/               cn(), formatting helpers
+    epkDocument.js   the press kit as an editable document model
+    epkPdf.js        that document rendered to a real PDF
 test/smoke.mjs       end-to-end browser suite
 docs/design-brief.md the visual brief — source of truth for the look
 docs/handover.md     state, decisions, open questions
@@ -101,6 +104,7 @@ docs/mockups/        earlier HTML mockups (superseded by the brief)
 | Upload your own EPK | ✓ | ✓ |
 | Add private venues | ✓ | ✓ |
 | EPK generator | Bio only | Full |
+| PDF press kit | — | ✓ |
 | Follow-up reminders, saved lists, CSV export, analytics | — | ✓ |
 
 Basic keeps the generator's **Biography** section even though the generator is a Pro feature:
@@ -149,6 +153,44 @@ the cache clears when the provider changes.
 Rewrites (`Tighten`, `Warm it up`, `Shorten`, `Personalise`) act on the draft that already
 exists rather than generating from scratch — consistency is the product's promise, and the
 first draft should never be a dice roll. They're gated to Pro (`can('aiRewrite')`).
+
+## The press kit PDF
+
+The booking email is short on purpose. The full pitch travels as a **PDF press kit**,
+generated from the EPK, previewed and edited in the send flow, and attached to the email.
+
+Three modules, each with one job:
+
+| | |
+| --- | --- |
+| `src/lib/epkDocument.js` | The EPK's structured fields → an ordered run of titled text blocks. Pure, no browser, unit-tested. |
+| `src/lib/epkPdf.js` | That document → a real PDF, in the product's own type. |
+| `src/components/PressKit.jsx` | Preview, editor, and the `usePressKit()` hook the routes use. |
+
+**Every block is plain text**, including the ones built from structured data — the rider
+and the link list flatten to `Label — value` lines. One textarea per block is the whole
+editing model, so an artist can write "Spotify — we're the loud one" instead of a bare URL.
+Sections can be reworded, renamed, reordered or switched off; empty ones never print.
+Edits save to the EPK, and **Rebuild from EPK** throws them away and re-derives.
+
+The PDF is vector text with **Anton and Inter embedded** (the `.ttf` files in
+`src/assets/fonts`, the same faces as the web build — jsPDF can't read the `.woff2`), so a
+kit opens in the product's type on the booker's machine rather than falling back to
+Helvetica. If you ever replace a font, regenerate its `.ttf` from the `.woff2`:
+
+```bash
+npx -y wawoff2 decompress src/assets/fonts/anton-400.woff2 src/assets/fonts/anton-400.ttf
+``` Cover page on ink with the photo band and poster type; content pages on flash
+paper with red section rules and a footer. jsPDF and the fonts are ~500KB together and are
+**dynamically imported**, so the app only pays for them when a kit is actually built.
+
+Sending snapshots the document onto the outreach record, exactly as the email body is
+snapshotted — editing the EPK next month never rewrites what a venue was sent. The record
+stores the document, not the bytes: a few hundred KB of PDF per send would exhaust the
+localStorage quota, so **Outreach → a record → PDF** rebuilds that exact kit on demand.
+
+Building a kit is a **Pro** capability, like the rest of the generator. Basic still attaches
+a press kit made elsewhere (`uploadedFile`).
 
 ## Adding venues
 
@@ -200,6 +242,9 @@ from any subpath or a plain static host.
 - **The draft is generated locally, not by an AI call.** Tone presets reshape the framing
   around the artist's own bio; nothing is sent to a model. Wiring in a real generator means
   replacing `composeBody()` in `src/routes/SendEpk.jsx`.
+- **The press kit PDF is real** — it downloads, embeds the fonts and opens anywhere — but
+  because sending is simulated, nothing physically attaches it to an email. A send provider
+  would take the same blob from `generateEpkPdf()`.
 - **The map is hand-drawn SVG**, not a tile map, so it works offline. It reads as a plot of
   Victoria rather than a street map.
 - **No payments.** Choosing a plan switches the feature set only.

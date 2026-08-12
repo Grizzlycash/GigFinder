@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Search, Download, LayoutGrid, Rows3, Send, Trash2 } from 'lucide-react';
+import { Search, Download, LayoutGrid, Rows3, Send, Trash2, Paperclip, Loader2 } from 'lucide-react';
 import {
   myOutreach, venueById, STATUSES, statusMeta, setOutreachStatus, updateOutreach,
-  deleteOutreach, outreachStats, dueFollowUps, isPro, can, loadDemoOutreach, epkById,
+  deleteOutreach, outreachStats, dueFollowUps, isPro, can, loadDemoOutreach, epkById, currentUser,
 } from '@/store/store';
 import AppShell from '@/components/AppShell';
 import { Stamp } from '@/components/Stamp';
@@ -16,8 +16,52 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { generateEpkPdf } from '@/lib/epkPdf';
 import { fmtDate, fmtDateTime, toCsv, download } from '@/lib/format';
 import { cn } from '@/lib/utils';
+
+/**
+ * The press kit as it went out. The document is snapshotted on the record, so this
+ * rebuilds *that* PDF — not whatever the EPK says today.
+ */
+function SentAttachment({ record, epk }) {
+  const [building, setBuilding] = useState(false);
+  const { attachment } = record;
+
+  async function rebuild() {
+    setBuilding(true);
+    try {
+      const { blob, filename } = await generateEpkPdf({ document: attachment.document, epk, user: currentUser() });
+      const url = URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      toast.error('Could not rebuild that press kit', { description: err.message });
+    } finally {
+      setBuilding(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 rounded-[3px] border border-paper-line bg-paper-shade/70 p-3" data-attachment>
+      <Paperclip className="size-4 shrink-0 text-flash-red" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[0.82rem] text-paper-ink">{attachment.filename}</p>
+        <p className="text-[0.72rem] text-paper-muted">
+          {attachment.kind === 'pdf' ? `Press kit · ${attachment.pages} pages as sent` : `Uploaded file${attachment.size ? ` · ${attachment.size}` : ''}`}
+        </p>
+      </div>
+      {attachment.kind === 'pdf' && attachment.document && (
+        <Button variant="paper" size="sm" onClick={rebuild} disabled={building} data-attachment-download>
+          {building ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} PDF
+        </Button>
+      )}
+    </div>
+  );
+}
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -269,6 +313,8 @@ export default function Tracker() {
                 <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-[3px] border border-paper-line bg-white/50 p-3 font-sans text-[0.8rem] leading-relaxed text-paper-ink">
                   {record.body}
                 </pre>
+
+                {record.attachment && <SentAttachment record={record} epk={kit} />}
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1.5">

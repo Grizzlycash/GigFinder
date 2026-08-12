@@ -187,6 +187,11 @@ await step('rewrites are Pro-gated on Basic', async () => {
   if (disabled === null) throw new Error('rewrite should be disabled on Basic');
 });
 
+await step('the PDF press kit is Pro-gated on Basic', async () => {
+  if (await page.locator('[data-kit-edit]').count() !== 0) throw new Error('Basic should not get the kit builder');
+  if (!/part of Pro/.test(await page.textContent('[data-send]'))) throw new Error('no upgrade prompt on the attachment step');
+});
+
 await step('disclosure never shows the contact', async () => {
   await page.click('[data-disclosure]');
   await page.waitForSelector('[role=dialog]');
@@ -257,8 +262,72 @@ await step('EPK generator unlocked on Pro', async () => {
   await page.click('[data-section="4"]');
   await page.waitForSelector('#r-format');
   await page.click('[data-preview]');
-  await page.waitForSelector('[role=dialog]');
+  await page.waitForSelector('[data-kit-preview]');
+  const kit = await page.textContent('[data-kit-preview]');
+  if (!/garage rock/.test(kit)) throw new Error('press kit preview is not built from the EPK bio');
   await shot('14-epk-preview');
+  await page.keyboard.press('Escape');
+});
+
+await step('press kit — edit the document before it goes out', async () => {
+  await page.goto(`${BASE}/#/send`, { waitUntil: 'networkidle' });
+  await page.waitForSelector('[data-kit-edit]');
+  await page.click('[data-kit-edit]');
+  await page.waitForSelector('[data-kit-section="bio"]');
+
+  // Reword a section, retitle it and drop another — all three must reach the preview.
+  await page.getByLabel('Biography text').fill('Rewritten for this booker: loud, hooky, and cheap to book.');
+  await page.getByLabel('Biography heading').fill('About the band');
+  await page.locator('[data-kit-section="rider"] input[type=checkbox], [data-kit-section="rider"] button[role=checkbox]').first().click();
+  await page.waitForTimeout(300);
+  await shot('20-press-kit-editor');
+
+  await page.click('[data-kit-preview-open]');
+  await page.waitForSelector('[data-kit-preview]');
+  const shown = await page.textContent('[data-kit-preview]');
+  if (!shown.includes('Rewritten for this booker')) throw new Error('edited copy did not reach the preview');
+  if (!shown.includes('About the band')) throw new Error('renamed heading did not reach the preview');
+  if (/Technical rider/i.test(shown)) throw new Error('excluded section still printed');
+  await shot('21-press-kit-preview');
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+});
+
+await step('press kit — downloads a real PDF', async () => {
+  const wait = page.waitForEvent('download', { timeout: 60000 });
+  await page.click('[data-kit-download]');
+  const download = await wait;
+  const name = download.suggestedFilename();
+  if (!/press-kit\.pdf$/.test(name)) throw new Error(`unexpected filename: ${name}`);
+
+  const file = await download.path();
+  const bytes = fs.readFileSync(file);
+  if (bytes.subarray(0, 5).toString() !== '%PDF-') throw new Error('downloaded file is not a PDF');
+  if (bytes.length < 8000) throw new Error(`PDF is suspiciously small: ${bytes.length} bytes`);
+
+  // The brand faces have to be embedded, or the kit prints in Helvetica on the booker's machine.
+  const raw = bytes.toString('latin1');
+  for (const face of ['Anton', 'Inter']) {
+    if (!raw.includes(`/BaseFont /${face}`) && !raw.includes(`/BaseFont/${face}`)) {
+      throw new Error(`${face} is not embedded in the PDF`);
+    }
+  }
+  if ((raw.match(/\/FontFile2/g) || []).length < 2) throw new Error('font programs are not embedded');
+  if (!/Rewritten for this booker/.test(raw) && !raw.includes('FlateDecode')) {
+    throw new Error('PDF has neither the edited copy nor compressed streams');
+  }
+});
+
+await step('the send records what was attached', async () => {
+  await page.click('[data-send] button[type=submit]');
+  await page.waitForSelector('table, [data-card]', { timeout: 20000 });
+  await page.waitForTimeout(400);
+  await page.click('[data-open] >> nth=0');
+  await page.waitForSelector('[data-attachment]');
+  const attached = await page.textContent('[data-attachment]');
+  if (!/press-kit\.pdf/.test(attached)) throw new Error('the outreach record does not name the attachment');
+  if (!/pages as sent/.test(attached)) throw new Error('the outreach record does not record the page count');
+  await shot('22-attachment-on-record');
   await page.keyboard.press('Escape');
 });
 

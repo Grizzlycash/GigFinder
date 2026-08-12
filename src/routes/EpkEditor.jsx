@@ -3,11 +3,12 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   User, Image as ImageIcon, Music, Globe, SlidersHorizontal, Check, Lock,
-  Eye, ChevronLeft, ChevronRight, Plus, Trash2, Send, Upload,
+  Eye, ChevronLeft, ChevronRight, Plus, Trash2, Send, Upload, Download, RotateCcw, Loader2,
 } from 'lucide-react';
 import { epkById, updateEpk, currentUser, normaliseEpk, epkProgress, can, isPro, PLANS } from '@/store/store';
 import { ALL_GENRES } from '@/data/venues';
 import AppShell from '@/components/AppShell';
+import { PressKitPages, usePressKit } from '@/components/PressKit';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,6 +47,7 @@ export default function EpkEditor() {
 
   const progress = useMemo(() => epkProgress(draft), [draft]);
   const generator = can('epkGenerator');
+  const kit = usePressKit(stored);
 
   if (!draft) {
     return (
@@ -413,46 +415,25 @@ export default function EpkEditor() {
         </div>
       </div>
 
-      {/* ---- Preview ---- */}
+      {/* ---- Preview: the press kit exactly as it prints ---- */}
       <Dialog open={preview} onOpenChange={setPreview}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>EPK preview</DialogTitle></DialogHeader>
-          <div className="-mx-5 -mb-5 border-t border-paper-line">
-            <div className="bg-ink px-5 py-6 text-bone">
-              <h2 className="text-3xl leading-none">{draft.title || user.artistName}</h2>
-              <p className="mt-1.5 text-[0.85rem] text-bone-muted">{draft.tagline || 'No tagline yet'}</p>
-            </div>
-            <div className="space-y-4 px-5 py-5 text-[0.85rem] leading-relaxed">
-              {draft.photos?.length > 0 && (
-                <div className="grid grid-cols-3 gap-2">
-                  {draft.photos.slice(0, 3).map((p) => (
-                    <img key={p.id} src={p.src} alt="" className="aspect-square rounded-[2px] border border-paper-line object-cover" />
-                  ))}
-                </div>
-              )}
-              <section><p className="eyebrow text-paper-muted">Bio</p><p className="mt-1">{draft.shortBio || 'No short bio yet.'}</p></section>
-              {draft.longBio && <section><p className="eyebrow text-paper-muted">More</p><p className="mt-1">{draft.longBio}</p></section>}
-              <section>
-                <p className="eyebrow text-paper-muted">Details</p>
-                <p className="mt-1 text-paper-muted">
-                  {draft.homeCity || '—'} · {(draft.genres || []).join(', ') || 'No genres'} · {draft.setLength} set · draws {draft.audienceSize}
-                </p>
-              </section>
-              {draft.notable && <section><p className="eyebrow text-paper-muted">Notable</p><p className="mt-1">{draft.notable}</p></section>}
-              {draft.tracks?.some((t) => t.url) && (
-                <section>
-                  <p className="eyebrow text-paper-muted">Listen</p>
-                  {draft.tracks.filter((t) => t.url).map((t) => <p key={t.id} className="mt-1 truncate">{t.title || 'Untitled'} — <span className="text-paper-muted">{t.url}</span></p>)}
-                </section>
-              )}
-              <section>
-                <p className="eyebrow text-paper-muted">Links</p>
-                {[...Object.entries(draft.music), ...Object.entries(draft.socials)].filter(([, v]) => v).map(([k, v]) => (
-                  <p key={k} className="mt-1 truncate capitalize">{k}: <span className="text-paper-muted">{v}</span></p>
-                )) }
-              </section>
-            </div>
+        <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+          <DialogHeader><DialogTitle>Press kit preview</DialogTitle></DialogHeader>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex-1 text-[0.76rem] text-paper-muted">
+              About {kit.pages} pages. The PDF is what the venue receives.
+            </span>
+            <Button variant="ghost-paper" size="sm" onClick={kit.rebuild} data-kit-rebuild>
+              <RotateCcw className="size-4" /> Rebuild from EPK
+            </Button>
+            <Button variant="paper" size="sm" onClick={kit.download} disabled={kit.building} data-kit-download>
+              {kit.building ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} Download PDF
+            </Button>
           </div>
+          <PressKitPages document={kit.document} epk={stored} />
+          <p className="text-[0.74rem] text-paper-muted">
+            Wording, section order and what's included are editable when you attach it to a booking email.
+          </p>
         </DialogContent>
       </Dialog>
     </AppShell>

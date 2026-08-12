@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Send, RefreshCw, Pencil, Lock, AlertTriangle, Sparkles, ShieldCheck, Loader2,
+  Send, RefreshCw, Pencil, Lock, AlertTriangle, Sparkles, ShieldCheck, Loader2, FileText,
 } from 'lucide-react';
 import {
   activeVenues, venueById, myEpks, defaultEpk, epkById, currentUser, state,
@@ -12,7 +12,9 @@ import {
   TONES, REWRITES, buildPayload, draftEmail, redactContact, applyContact,
   previewTransmission, hasDraftProvider,
 } from '@/lib/draft';
+import { printableSections, documentFilename } from '@/lib/epkDocument';
 import AppShell from '@/components/AppShell';
+import { PressKitActions, PressKitEditor, usePressKit } from '@/components/PressKit';
 import { Stamp } from '@/components/Stamp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -92,6 +94,10 @@ export default function SendEpk() {
   const [to, setTo] = useState('');
   const [busy, setBusy] = useState(null);
   const [disclosure, setDisclosure] = useState(false);
+  const [editingKit, setEditingKit] = useState(false);
+
+  const kit = usePressKit(epk);
+  const kitFilename = documentFilename(kit.document);
 
   const payload = useMemo(
     () => (venue && epk ? buildPayload({ user, venue, epk }) : null),
@@ -160,10 +166,32 @@ export default function SendEpk() {
     );
   }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
-    recordSend({ venueId: venue.id, epkId, to: to.trim(), subject: subject.trim(), body });
-    toast.success(`Sent to ${venue.name}`, { description: 'Tracked in your outreach.' });
+    setBusy('send');
+
+    // Build the kit for real before recording the send, so the page count on the record is
+    // the document's, not an estimate — and so a kit that can't be built is found now
+    // rather than by the booker. A failure here still sends: losing the outreach record
+    // over a PDF would be the worse trade.
+    let attachment = null;
+    if (can('epkGenerator')) {
+      try {
+        const { filename, pages } = await kit.build();
+        attachment = { kind: 'pdf', filename, pages, document: kit.document };
+      } catch {
+        attachment = { kind: 'pdf', filename: kitFilename, pages: kit.pages, document: kit.document };
+        toast('Attached the press kit, but the PDF needs rebuilding');
+      }
+    } else if (epk?.uploadedFile) {
+      attachment = { kind: 'file', filename: epk.uploadedFile.name, size: epk.uploadedFile.size };
+    }
+
+    recordSend({ venueId: venue.id, epkId, to: to.trim(), subject: subject.trim(), body, attachment });
+    setBusy(null);
+    toast.success(`Sent to ${venue.name}`, {
+      description: attachment ? `${attachment.filename} attached · tracked in your outreach.` : 'Tracked in your outreach.',
+    });
     navigate('/outreach');
   }
 
@@ -294,24 +322,77 @@ export default function SendEpk() {
           </div>
         </Step>
 
-        <Step n={6} title="What's attached" sub="What the venue receives with your message.">
-          <div className="flex items-center gap-3 rounded-[3px] border border-paper-line bg-paper-shade/70 p-3">
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-display uppercase tracking-[0.06em] text-[0.85rem] text-paper-ink">{epk?.title}</p>
-              <p className="truncate text-[0.75rem] text-paper-muted">
-                {(epk?.photos || []).length} photo(s) · {(epk?.tracks || []).length} track(s) · {(epk?.pressQuotes || []).length} quote(s)
-                {epk?.uploadedFile ? ` · ${epk.uploadedFile.name}` : ''}
+        <Step
+          n={6}
+          title="The press kit"
+          sub="A PDF built from your EPK, attached to the email."
+          aside={
+            <span className="whitespace-nowrap text-[0.72rem] text-paper-muted" data-kit-pages>
+              {kitFilename} · ~{kit.pages} pages
+            </span>
+          }
+        >
+          {can('epkGenerator') ? (
+            <>
+              <div className="flex items-start gap-3 rounded-[3px] border border-paper-line bg-paper-shade/70 p-3">
+                <FileText className="mt-0.5 size-5 shrink-0 text-flash-red" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display uppercase tracking-[0.06em] text-[0.85rem] text-paper-ink">
+                    {kit.document.headline}
+                  </p>
+                  <p className="truncate text-[0.75rem] text-paper-muted">
+                    {printableSections(kit.document).map((s) => s.title).join(' · ') || 'Nothing switched on yet'}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant={editingKit ? 'secondary' : 'paper'}
+                  size="sm"
+                  onClick={() => setEditingKit((v) => !v)}
+                  data-kit-edit
+                >
+                  <Pencil className="size-3.5" /> {editingKit ? 'Done editing' : 'Edit'}
+                </Button>
+              </div>
+
+              <PressKitActions kit={kit} epk={epk} className="mt-3" />
+
+              {editingKit && (
+                <div className="mt-3 border-t border-dashed border-paper-line pt-3">
+                  <p className="mb-3 text-[0.76rem] text-paper-muted">
+                    Reword it, switch sections off, or reorder them. Changes save to this EPK, and the venue is
+                    sent the version you see here.
+                  </p>
+                  <PressKitEditor document={kit.document} epk={epk} onChange={kit.setDocument} />
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="rounded-[3px] border border-paper-line bg-paper-shade/70 p-3">
+              <p className="text-[0.82rem] text-paper-ink">
+                {epk?.uploadedFile
+                  ? <>Your uploaded press kit <strong className="font-semibold">{epk.uploadedFile.name}</strong> goes out with this email.</>
+                  : 'No press kit attached — this email goes out on its own.'}
               </p>
+              <p className="mt-1.5 flex items-center gap-1.5 text-[0.76rem] text-paper-muted">
+                <Lock className="size-3.5" /> Building a PDF press kit from your EPK is part of Pro.
+              </p>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                <Button type="button" variant="paper" size="sm" asChild>
+                  <Link to={`/epk/${epk?.id}`}><Pencil className="size-3.5" /> Attach my own</Link>
+                </Button>
+                <Button type="button" size="sm" asChild><Link to="/pricing">See Pro</Link></Button>
+              </div>
             </div>
-            <Button variant="paper" size="sm" asChild>
-              <Link to={`/epk/${epk?.id}`}><Pencil className="size-3.5" /> Edit</Link>
-            </Button>
-          </div>
+          )}
         </Step>
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <Button type="button" variant="ghost" onClick={() => navigate('/venues')}>Cancel</Button>
-          <Button type="submit" size="lg" disabled={Boolean(busy)}><Send className="size-4" /> Send it</Button>
+          <Button type="submit" size="lg" disabled={Boolean(busy)}>
+            {busy === 'send' ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            {busy === 'send' ? 'Building the kit…' : 'Send it'}
+          </Button>
         </div>
       </form>
 

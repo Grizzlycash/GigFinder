@@ -395,6 +395,9 @@ export function createEpk(data = {}) {
     tracks: [],
     pressQuotes: [],
     uploadedFile: null, // Basic tier: attach a press kit made elsewhere
+    // The printable press kit. Null until the artist edits it, at which point their
+    // wording sticks; until then it's derived from the fields above on every render.
+    document: null,
     isDefault: state.epks.filter((e) => e.userId === user.id).length === 0,
     updatedAt: new Date().toISOString(),
     ...data,
@@ -415,7 +418,13 @@ export function normaliseEpk(epk) {
   epk.tracks = epk.tracks || [];
   epk.pressQuotes = epk.pressQuotes || [];
   epk.notable = epk.notable || '';
+  epk.document = epk.document || null;
   return epk;
+}
+
+/** Store the artist's edited press-kit document, or clear it back to the derived one. */
+export function saveEpkDocument(id, document) {
+  return updateEpk(id, { document: document || null });
 }
 
 // Which of the five generator sections have real content in them.
@@ -466,7 +475,7 @@ export function outreachForVenue(venueId) {
   return myOutreach().filter((o) => o.venueId === venueId).sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt))[0] || null;
 }
 
-export function recordSend({ venueId, epkId, to, subject, body }) {
+export function recordSend({ venueId, epkId, to, subject, body, attachment = null }) {
   const user = currentUser();
   const now = new Date().toISOString();
   const followUpAt = plan().limits.followUps
@@ -480,12 +489,21 @@ export function recordSend({ venueId, epkId, to, subject, body }) {
     to,
     subject,
     body,
+    // What went out with the email. The press-kit document is snapshotted here, exactly
+    // as the email body is, so editing the EPK next month never rewrites what this venue
+    // was actually sent. The PDF itself is rebuilt from the snapshot on demand — storing
+    // the bytes would blow the localStorage quota after a handful of sends.
+    attachment,
     status: 'emailed',
     sentAt: now,
     updatedAt: now,
     followUpAt,
     notes: '',
-    history: [{ at: now, label: 'Email sent', detail: to }],
+    history: [{
+      at: now,
+      label: 'Email sent',
+      detail: attachment?.filename ? `${to} · ${attachment.filename}` : to,
+    }],
   };
   state.outreach.push(record);
   save();

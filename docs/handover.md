@@ -1,6 +1,6 @@
 # Where GigFinder stands
 
-Last updated: 11 August 2026. Branch: `claude/gigbook-web-app-6tpcs3`.
+Last updated: 12 August 2026. Branch: `claude/gigbook-web-app-6tpcs3`.
 
 Read this first when picking the project back up — state, decisions already made, and the
 questions still open.
@@ -10,7 +10,7 @@ questions still open.
 ```bash
 npm install
 npm run dev     # http://localhost:5173
-npm test        # builds, then drives the whole app in Chromium (27 steps)
+npm test        # builds, then drives the whole app in Chromium (31 steps)
 ```
 
 Stack: React + Vite + Tailwind v4 + shadcn/ui, hash routing, state in `localStorage`.
@@ -28,6 +28,30 @@ to GigFinder and reseeded with Melbourne venues.
 
 The store, plan limits, CSV import and pipeline logic were ported across rather than
 rewritten — that logic was already proven, so only the presentation layer is new.
+
+## The press kit PDF (latest round)
+
+Outreach now has two halves: the short introduction email, and a **generated PDF press kit**
+attached to it. `src/lib/epkDocument.js` turns the EPK's fields into an ordered run of
+editable text blocks; `src/lib/epkPdf.js` prints that to a real PDF with Anton and Inter
+embedded; `src/components/PressKit.jsx` is the preview, the editor and the `usePressKit()`
+hook. Step 6 of the send flow previews it, edits it and downloads it, and the outreach
+record keeps the document as sent so it can rebuild that exact PDF later.
+
+Calls made while building it:
+- **Blocks are plain text, even the structured ones.** The rider and link lists flatten to
+  `Label — value` lines, so editing is one textarea per block rather than a second form.
+- **Edits save to the EPK, not to the send.** Consistency is the product's promise; a
+  per-send override would be a second source of truth. "Rebuild from EPK" is the escape hatch.
+- **The record stores the document, not the bytes.** A few hundred KB of PDF per send would
+  exhaust the localStorage quota, so the PDF is rebuilt on demand from the snapshot.
+- **Fonts are embedded** (`src/assets/fonts/*.ttf`, decompressed from the `.woff2` the web
+  build uses — jsPDF can't read woff2). Without them the kit prints in Helvetica on the
+  booker's machine, which is a different product.
+- **Building a kit is Pro**, like the rest of the generator; Basic still attaches its own
+  file. One line in `store.js` (`can('epkGenerator')`) if you want that split elsewhere.
+- jspdf and the fonts (~500KB) are **dynamically imported**, so the app only loads them when
+  a kit is actually built.
 
 ## Decisions already made
 
@@ -71,14 +95,18 @@ rewritten — that logic was already proven, so only the presentation layer is n
    listed on the pricing cards, because the pricing mockup didn't list them.
 4. **GST.** Prices are now AUD but say nothing about GST. Australian SaaS usually states
    "incl. GST" — worth confirming with your accountant before the copy claims either way.
-5. **Onboarding, pricing, settings and admin weren't in the brief's scope list** — they follow
+5. **Should the PDF press kit be advertised on the pricing cards?** It's a concrete Pro
+   capability and probably the most sellable one, but the cards still list what the pricing
+   mockup listed. Same open question as saved lists and CSV export.
+6. **Onboarding, pricing, settings and admin weren't in the brief's scope list** — they follow
    the same design language, but they haven't been designed against a brief the way the four
    named screens were.
 
 ## Known prototype boundaries
 
-- Sending is simulated — the outreach record keeps its own copy of the email, but no provider
-  is contacted.
+- Sending is simulated — the outreach record keeps its own copy of the email and of the press
+  kit document, but no provider is contacted. The PDF itself is real and downloads; nothing
+  physically attaches it to an email until there's a send provider.
 - Drafts are generated locally; there is no AI call.
 - The map is hand-drawn SVG, not a tile map, so it works offline; dense inner-suburb pins
   cluster into numbered markers that split as you zoom.
@@ -95,6 +123,10 @@ rewritten — that logic was already proven, so only the presentation layer is n
 - Venues with no coordinates stretched the map projection; they're excluded from the map.
 - The dashboard greeted the band name's first word ("Good morning, The"); it uses the contact
   name.
+- The press kit's PHOTOS heading printed at the foot of a page with its photos overleaf.
+  `Sheet.heading()` takes a `keepWith` height so a heading never separates from its content.
+- The cover's red rule printed *behind* the headline: jsPDF's `text()` y is a baseline, so
+  the block grows upward. The cover is laid out bottom-up now, and the rule clears the caps.
 
 ## Sandbox note
 
