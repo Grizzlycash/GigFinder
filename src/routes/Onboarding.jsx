@@ -105,7 +105,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <header className="border-b border-ink-line bg-ink-raised px-5 py-3.5">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <span className="grid size-7 place-items-center rounded-[2px] bg-flash-red font-display text-[0.8rem] text-[#fbf7ec]">GF</span>

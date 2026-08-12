@@ -72,11 +72,11 @@ export default function AppShell({ title, subtitle, actions, admin = false, flus
   const remaining = sendsRemaining();
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen">
       {/* ---- Sidebar ---- */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 w-56 shrink-0 flex flex-col bg-ink-raised border-r border-ink-line',
+          'fixed inset-y-0 left-0 z-40 w-56 shrink-0 flex flex-col bg-ink-deep spine',
           'transition-transform lg:static lg:translate-x-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
@@ -148,7 +148,7 @@ export default function AppShell({ title, subtitle, actions, admin = false, flus
 
       {/* ---- Main ---- */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-ink-line bg-ink-raised/95 px-4 py-3 backdrop-blur lg:px-6">
+        <header className="bill-rule sticky top-0 z-20 flex items-center gap-3 bg-ink/95 px-4 py-3 backdrop-blur lg:px-6">
           <Button variant="ghost" size="icon-sm" className="lg:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu">
             <Menu />
           </Button>

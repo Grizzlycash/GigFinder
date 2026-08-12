@@ -22,12 +22,19 @@
 }
 
 @theme {
-  /* Ink — the dark ground */
+  /* Ink — the dark ground, in four levels rather than one flat field.
+     Deep sits under the ground, so the sidebar reads as the spine of the book and the
+     top bar as a strip laid over it. `ink` itself is unchanged: it is the deep stock the
+     press kit cover, the map and the stamp badges print on, and none of those should move.
+     Everything else is lifted, partly for depth and partly because near-black crushes
+     texture — grain needs a ground with somewhere to go. */
+  --color-ink-deep: #0d1015;
   --color-ink: #12151c;
-  --color-ink-raised: #1a1e27;
-  --color-ink-hover: #232833;
-  --color-ink-line: #2c323f;
-  --color-ink-line-strong: #3d4553;
+  --color-ink-ground: #171b24;
+  --color-ink-raised: #1f2530;
+  --color-ink-hover: #29303d;
+  --color-ink-line: #323a49;
+  --color-ink-line-strong: #47505f;
 
   /* Flash paper — content surfaces */
   --color-paper: #f6f1e3;
@@ -65,7 +72,7 @@
 :root {
   --radius: 3px;
 
-  --background: var(--color-ink);
+  --background: var(--color-ink-ground);
   --foreground: var(--color-bone);
 
   --card: var(--color-paper);
@@ -122,13 +129,35 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    /* Faint paper grain over the ink ground — poster stock, not flat black. */
+  /* The ground lives on <html> so the wash can't scroll away from under the app, and so
+     body::before has something to sit on top of. A flat field reads as dead mostly
+     because nothing is lighting it: this is one warm source falling from above the fold
+     and a cool one pooling bottom-right, both far too wide to read as a gradient. */
+  html {
+    background-color: var(--color-ink-ground);
     background-image:
-      radial-gradient(circle at 15% 12%, rgba(178, 58, 46, 0.05), transparent 42%),
-      radial-gradient(circle at 85% 78%, rgba(60, 110, 82, 0.05), transparent 45%);
+      radial-gradient(ellipse 95% 55% at 50% -12%, rgba(178, 58, 46, 0.07), transparent 62%),
+      radial-gradient(ellipse 75% 55% at 100% 105%, rgba(60, 110, 82, 0.06), transparent 58%);
     background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  body {
+    @apply text-foreground font-sans antialiased;
+    background: transparent;
+  }
+
+  /* Printed stock, not flat charcoal. Fractal noise tiled over the ground — inline, so
+     there's no image to fetch. It sits at z-index -1: above the ground and its wash,
+     below every pixel of the app, so paper surfaces stay clean. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.055;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   h1, h2, h3, .display {
@@ -194,6 +223,24 @@
     font-size: 0.95rem;
     @apply px-3 py-1 border-[3px];
     letter-spacing: 0.18em;
+  }
+
+  /* ---- Misregistration: a two-colour print that didn't quite line up ----
+     Colour on the ground without resorting to a gradient. The red plate sits a pixel
+     proud of the edge and the green a pixel behind it, the way a cheap two-run screen
+     print misses. Kept to the two structural edges — the sidebar and the top bar — so it
+     reads as a printing artefact rather than a decoration. */
+  .spine {
+    box-shadow:
+      1px 0 0 var(--color-ink-line),
+      2px 0 0 rgba(178, 58, 46, 0.5),
+      4px 0 0 rgba(60, 110, 82, 0.2);
+  }
+
+  .bill-rule {
+    box-shadow:
+      0 1px 0 var(--color-ink-line),
+      0 2px 0 rgba(178, 58, 46, 0.28);
   }
 
   /* ---- Hairline rule used on paper panels ---- */
