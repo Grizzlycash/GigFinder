@@ -69,8 +69,9 @@ over the whole viewport. Check for that before tuning any background value.
 The app was rebuilt from scratch on React + Tailwind + shadcn/ui and restyled to
 `docs/design-brief.md` (gig poster / tattoo flash sheet), replacing the previous
 zero-dependency vanilla build and its dark blue-grey theme, and reseeded with Melbourne
-venues. It was briefly renamed GigBook during that round and renamed back to GigBook once
-the domain was registered — if you find a stray "GigBook" anywhere, that's where it's from.
+venues. That round also renamed it from GigBook to GigFinder; the name came back to GigBook
+once gigbook.com.au was registered. Stray "GigFinder" mentions are from that window — the
+only deliberate ones left describe the old `gigfinder:v1` storage key.
 
 The store, plan limits, CSV import and pipeline logic were ported across rather than
 rewritten — that logic was already proven, so only the presentation layer is new.
