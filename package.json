@@ -1,8 +1,8 @@
 {
-  "name": "gigfinder",
+  "name": "gigbook",
   "version": "0.1.0",
   "private": true,
-  "description": "GigFinder — venue discovery, booking emails and outreach tracking for gigging musicians.",
+  "description": "GigBook — venue discovery, booking emails and outreach tracking for gigging musicians.",
   "scripts": {
     "dev": "vite",
     "start": "vite",

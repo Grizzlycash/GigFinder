@@ -1,12 +1,12 @@
-# GigFinder — Design Brief (reusable prompt template)
+# GigBook — Design Brief (reusable prompt template)
 
-Paste this at the start of any Claude Code session where you're building or restyling GigFinder UI.
+Paste this at the start of any Claude Code session where you're building or restyling GigBook UI.
 
 ---
 
 ## 1. Context (what this is)
 
-GigFinder is a tool for local musicians to discover and contact live music venues — currently working from a database of 222 Melbourne venues. Users are gigging musicians, not developers: the interface needs to feel fast, practical, and a little bit "of the music scene" — not like generic B2B SaaS.
+GigBook is a tool for local musicians to discover and contact live music venues — currently working from a database of 222 Melbourne venues. Users are gigging musicians, not developers: the interface needs to feel fast, practical, and a little bit "of the music scene" — not like generic B2B SaaS.
 
 ## 2. Design tokens
 

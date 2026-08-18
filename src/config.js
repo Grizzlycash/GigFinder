@@ -24,5 +24,16 @@ export const FEEDBACK_EMAIL = '';
  */
 export const PROTOTYPE = true;
 
+/**
+ * True only when the site is served behind Cloudflare Access.
+ *
+ * Access publishes the identity it verified at `/cdn-cgi/access/get-identity`; when the app
+ * is served anywhere else that path is a 404, and probing for it logs a console error on
+ * every load for every visitor. So it's a deliberate switch rather than a guess: turn it on
+ * in the same sitting as the Access policy (see docs/hosting.md), and testers get one login
+ * instead of two.
+ */
+export const ACCESS_SSO = false;
+
 /** Shown in the notice and attached to feedback reports, so you can tell rounds apart. */
 export const BUILD_LABEL = 'test round 1';

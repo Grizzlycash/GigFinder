@@ -252,7 +252,7 @@ function VenuesTab() {
   const samples = sampleVenues();
 
   function exportAll() {
-    download('gigfinder-master-venues.csv', toCsv([
+    download('gigbook-master-venues.csv', toCsv([
       FIELDS.map(([, label]) => label),
       ...state.venues.map((v) => FIELDS.map(([key]) => (key === 'genres' ? v.genres.join('; ') : v[key] ?? ''))),
     ]));

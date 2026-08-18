@@ -4,7 +4,11 @@
 import { seedVenues } from '@/data/venues';
 import { uid } from '@/lib/format';
 
-const KEY = 'gigfinder:v1';
+const KEY = 'gigbook:v1';
+// The app was briefly called GigFinder and stored under that key. Anyone who used it in
+// that window — including the beta testers — still has their whole world there, so the
+// first load under the new name adopts it rather than handing them an empty app.
+const LEGACY_KEY = 'gigfinder:v1';
 
 /* ---------- Plans ---------- */
 export const PLANS = {
@@ -131,8 +135,20 @@ function defaultState() {
 }
 
 /* ---------- Persistence ---------- */
+/** Move a GigFinder-era store across to the current key, once, without losing anything. */
+function adoptLegacyStore() {
+  try {
+    if (localStorage.getItem(KEY)) return;
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (!legacy) return;
+    localStorage.setItem(KEY, legacy);
+    localStorage.removeItem(LEGACY_KEY);
+  } catch { /* private mode, quota, or no storage at all — start fresh instead */ }
+}
+
 function load() {
   try {
+    adoptLegacyStore();
     const raw = localStorage.getItem(KEY);
     if (!raw) return defaultState();
     const parsed = JSON.parse(raw);
@@ -201,7 +217,7 @@ export function removeSampleVenues() {
 /** Everything this browser holds, as a file the tester can send back. */
 export function exportState() {
   return JSON.stringify({
-    app: 'gigfinder',
+    app: 'gigbook',
     exportedAt: new Date().toISOString(),
     userAgent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
     state,
@@ -211,9 +227,11 @@ export function exportState() {
 /** Load a tester's export. Replaces everything — the caller confirms first. */
 export function importState(text) {
   const parsed = JSON.parse(text);
-  const incoming = parsed?.state && parsed.app === 'gigfinder' ? parsed.state : parsed;
+  // 'gigfinder' files are exports a tester made before the rename; still ours, still valid.
+  const tagged = parsed?.app === 'gigbook' || parsed?.app === 'gigfinder';
+  const incoming = parsed?.state && tagged ? parsed.state : parsed;
   if (!incoming || !Array.isArray(incoming.venues) || !Array.isArray(incoming.users)) {
-    throw new Error("That doesn't look like a GigFinder export");
+    throw new Error("That doesn't look like a GigBook export");
   }
   localStorage.setItem(KEY, JSON.stringify(incoming));
   location.hash = '#/';

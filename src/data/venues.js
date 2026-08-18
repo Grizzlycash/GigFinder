@@ -1,4 +1,4 @@
-// The GigFinder venue database — real Victorian rooms.
+// The GigBook venue database — real Victorian rooms.
 //
 // GENERATED FILE. Do not hand-edit: re-run the importer and commit the result.
 //   node scripts/import-venues.mjs data-import.csv

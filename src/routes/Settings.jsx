@@ -110,7 +110,7 @@ export default function Settings() {
               <span>
                 Admin access
                 <span className="block text-[0.75rem] text-paper-muted">
-                  Shows the venue-database admin panel. In production this is granted by GigFinder staff, not self-served.
+                  Shows the venue-database admin panel. In production this is granted by GigBook staff, not self-served.
                 </span>
               </span>
             </label>
@@ -139,7 +139,7 @@ export default function Settings() {
                   size="sm"
                   data-export-state
                   onClick={() => {
-                    download(`gigfinder-test-data-${new Date().toISOString().slice(0, 10)}.json`, exportState());
+                    download(`gigbook-test-data-${new Date().toISOString().slice(0, 10)}.json`, exportState());
                     toast.success('Downloaded', { description: 'Send that file back with your notes.' });
                   }}
                 >

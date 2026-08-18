@@ -89,7 +89,7 @@ function AddVenueDialog({ open, onOpenChange }) {
     setName('');
     setCity('');
     if (visibility === 'shared') {
-      toast.success('Sent for review', { description: 'The GigFinder team will check it before it goes live for everyone.' });
+      toast.success('Sent for review', { description: 'The GigBook team will check it before it goes live for everyone.' });
     } else {
       toast.success('Private venue added');
       navigate(`/venues/${venue.id}`);
@@ -154,7 +154,7 @@ function AddVenueDialog({ open, onOpenChange }) {
                 <span>
                   Submit to the shared database
                   <span className="block text-[0.72rem] text-paper-muted">
-                    A GigFinder admin checks it before every subscriber sees it. You&apos;ll see the outcome under
+                    A GigBook admin checks it before every subscriber sees it. You&apos;ll see the outcome under
                     &ldquo;Your submissions&rdquo;.
                   </span>
                 </span>
@@ -216,7 +216,7 @@ function YourSubmissions() {
               </p>
               {v.status === 'pending' && (
                 <p className="mt-1 text-[0.76rem] text-paper-muted">
-                  With the GigFinder team. It goes live for everyone once it&apos;s approved.
+                  With the GigBook team. It goes live for everyone once it&apos;s approved.
                 </p>
               )}
               {v.status === 'rejected' && (
@@ -484,7 +484,7 @@ export default function Venues() {
   function exportCsv() {
     if (!can('csvExport')) { toast('CSV export is a Pro feature'); navigate('/pricing'); return; }
     const head = ['Name', 'Suburb', 'Capacity', 'Type', 'Genres', 'Contact', 'Email', 'Website'];
-    download('gigfinder-venues.csv', toCsv([head, ...rows.map((v) => [v.name, v.city, v.capacity, v.type, v.genres.join('; '), v.contactName, v.contactEmail, v.website])]));
+    download('gigbook-venues.csv', toCsv([head, ...rows.map((v) => [v.name, v.city, v.capacity, v.type, v.genres.join('; '), v.contactName, v.contactEmail, v.website])]));
     toast.success(`Exported ${rows.length} venues`);
   }
 

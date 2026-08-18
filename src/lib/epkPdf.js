@@ -284,7 +284,7 @@ export async function generateEpkPdf({ document, epk, user }) {
     title: `${document.headline} — press kit`,
     subject: document.tagline || 'Electronic press kit',
     author: user?.artistName || document.headline,
-    creator: 'GigFinder',
+    creator: 'GigBook',
   });
 
   const sections = printableSections(document);

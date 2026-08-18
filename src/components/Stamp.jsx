@@ -14,7 +14,7 @@ const STAMPS = {
   declined: { label: 'Passed', color: 'var(--color-stamp-declined)' },
 
   // Review states for submitted venues. Not outreach stages — they describe what
-  // the GigFinder team has done with a venue a subscriber sent in. They borrow the
+  // the GigBook team has done with a venue a subscriber sent in. They borrow the
   // existing inks rather than adding new ones: ochre already means "waiting on
   // someone else", dead grey already means "this one isn't happening".
   pending: { label: 'In review', color: 'var(--color-stamp-emailed)' },

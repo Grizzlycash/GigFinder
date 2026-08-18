@@ -111,7 +111,7 @@ export default function Tracker() {
   function exportCsv() {
     if (!can('csvExport')) { toast('CSV export is a Pro feature'); return; }
     const head = ['Venue', 'Suburb', 'Sent to', 'Subject', 'Sent', 'Status', 'Follow-up', 'Notes'];
-    download('gigfinder-outreach.csv', toCsv([head, ...rows.map((o) => {
+    download('gigbook-outreach.csv', toCsv([head, ...rows.map((o) => {
       const v = venueById(o.venueId);
       return [v?.name, v?.city, o.to, o.subject, fmtDate(o.sentAt), statusMeta(o.status).label, o.followUpAt ? fmtDate(o.followUpAt) : '', o.notes];
     })]));

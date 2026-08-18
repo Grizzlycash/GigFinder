@@ -1,4 +1,4 @@
-# GigFinder — product specification (v2.0, condensed)
+# GigBook — product specification (v2.0, condensed)
 
 Reference version of the v2.0 spec, kept next to the implementation so the two stay honest.
 The Word document remains the formal artifact; this file records what the app actually builds.
@@ -15,7 +15,7 @@ Three jobs, in order of use:
 2. **Send an EPK** to the booking contact without rewriting the pitch each time.
 3. **Track the pipeline** so nothing is dropped between "sent" and "booked".
 
-The venue database is shared across all subscribers and maintained by GigFinder staff, seeded
+The venue database is shared across all subscribers and maintained by GigBook staff, seeded
 from a proprietary spreadsheet. Subscribers can suggest additions, which enter a review queue.
 
 ## 2. Information architecture

@@ -1,4 +1,4 @@
-# GigFinder
+# GigBook
 
 Venue discovery, booking emails and outreach tracking for gigging musicians — built around a
 database of Melbourne live music rooms.
@@ -105,6 +105,7 @@ test/smoke.mjs       end-to-end browser suite
 docs/design-brief.md the visual brief — source of truth for the look
 docs/handover.md     state, decisions, open questions
 docs/test-round.md   putting it in front of testers
+docs/hosting.md      Cloudflare Pages + Access, and why
 docs/product-spec.md behaviour spec
 docs/mockups/        earlier HTML mockups (superseded by the brief)
 ```
@@ -235,7 +236,7 @@ The lifecycle lives in `src/store/store.js`: `addVenue(data, visibility)`,
 
 ## Data
 
-State is in `localStorage` under `gigfinder:v1` — nothing leaves the browser. `store.js` is
+State is in `localStorage` under `gigbook:v1` — nothing leaves the browser. `store.js` is
 the only module that touches persistence, so swapping it for API calls is the single change
 needed to move to a real backend.
 

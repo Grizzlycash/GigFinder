@@ -1,5 +1,5 @@
 /**
- * Fill Latitude and Longitude on the GigFinder venue spreadsheet, inside Google Sheets.
+ * Fill Latitude and Longitude on the GigBook venue spreadsheet, inside Google Sheets.
  *
  * This is Google Apps Script, not part of the app build — it lives here so it doesn't get
  * lost. Paste it into the spreadsheet itself; nothing installs into the repo.
@@ -7,8 +7,8 @@
  * ── How to use ────────────────────────────────────────────────────────────────
  *  1. Open the spreadsheet → Extensions → Apps Script.
  *  2. Delete whatever is in Code.gs, paste this whole file, hit Save.
- *  3. Reload the spreadsheet. A "GigFinder" menu appears next to Help.
- *  4. GigFinder → Fill in coordinates. Approve the permission prompt the first time —
+ *  3. Reload the spreadsheet. A "GigBook" menu appears next to Help.
+ *  4. GigBook → Fill in coordinates. Approve the permission prompt the first time —
  *     it's asking to read the sheet and use Google's geocoder.
  *  5. When it finishes: File → Download → Comma-separated values (.csv).
  *
@@ -28,7 +28,7 @@
 
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu('GigFinder')
+    .createMenu('GigBook')
     .addItem('Fill in coordinates', 'fillCoordinates')
     .addItem('Clear coordinates', 'clearCoordinates')
     .addToUi();

@@ -1,6 +1,6 @@
 # Running a test round
 
-Everything needed to put GigFinder in front of a handful of people, and the reasons behind
+Everything needed to put GigBook in front of a handful of people, and the reasons behind
 the awkward bits.
 
 ## Before you send the link
@@ -18,7 +18,7 @@ the awkward bits.
    empty, which is a poor look in a test round.
 
    **No terminal?** `scripts/geocode-sheet.gs` does the same job inside Google Sheets: paste
-   it into Extensions → Apps Script, run *GigFinder → Fill in coordinates*, then export the
+   it into Extensions → Apps Script, run *GigBook → Fill in coordinates*, then export the
    CSV. The importer reads `Latitude`/`Longitude` columns when they're there, so it needs no
    `--geocode` flag afterwards.
 

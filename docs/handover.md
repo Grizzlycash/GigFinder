@@ -1,4 +1,4 @@
-# Where GigFinder stands
+# Where GigBook stands
 
 Last updated: 12 August 2026 (test-round prep). Branch: `claude/gigbook-web-app-6tpcs3`.
 
@@ -15,16 +15,18 @@ npm test        # builds, then drives the whole app in Chromium (37 steps)
 
 Stack: React + Vite + Tailwind v4 + shadcn/ui, hash routing, state in `localStorage`.
 
-To see it deployed: set **Settings → Pages → Source: GitHub Actions** once. The workflow in
-`.github/workflows/pages.yml` builds and publishes on every push to
-`https://grizzlycash.github.io/GigFinder/`.
+**Hosting is moving** — see `docs/hosting.md`. The beta runs on Cloudflare Pages behind
+Cloudflare Access on gigbook.com.au, because a login can't be enforced on a static file host.
+The old GitHub Pages workflow (`.github/workflows/pages.yml`, publishing to
+`https://grizzlycash.github.io/GigFinder/`) stays until the cut-over, then gets switched off.
 
 ## What happened in this session
 
 The app was rebuilt from scratch on React + Tailwind + shadcn/ui and restyled to
 `docs/design-brief.md` (gig poster / tattoo flash sheet), replacing the previous
-zero-dependency vanilla build and its dark blue-grey theme. It was also renamed from GigBook
-to GigFinder and reseeded with Melbourne venues.
+zero-dependency vanilla build and its dark blue-grey theme, and reseeded with Melbourne
+venues. It was briefly renamed GigBook during that round and renamed back to GigBook once
+the domain was registered — if you find a stray "GigBook" anywhere, that's where it's from.
 
 The store, plan limits, CSV import and pipeline logic were ported across rather than
 rewritten — that logic was already proven, so only the presentation layer is new.
@@ -85,6 +87,9 @@ See `docs/test-round.md`. The app now says what it is — a first-run notice, a 
 and a line by the send button — because sending is convincing enough that a tester could
 believe they had emailed a venue. Testers export their round as JSON and send it back;
 there's no backend, so that file is the only way to see what they did.
+
+Behind Access, `src/lib/access.js` reads the email Cloudflare already verified and signs that
+tester straight in, so they see one login rather than two. It no-ops anywhere else.
 
 `src/config.js` is the whole switchboard: `PROTOTYPE`, `FEEDBACK_EMAIL` (empty by default —
 this repo is public and addresses get scraped; empty means the feedback button copies to the

@@ -88,10 +88,10 @@ export default function AppShell({ title, subtitle, actions, admin = false, flus
             className={cn('grid place-items-center size-7 rounded-[2px] font-display text-[0.85rem]',
               admin ? 'bg-stamp-emailed text-ink' : 'bg-flash-red text-[#fbf7ec]')}
           >
-            {admin ? <Shield className="size-4" /> : 'GF'}
+            {admin ? <Shield className="size-4" /> : 'GB'}
           </span>
           <span className="leading-none">
-            <span className="block font-display text-[1.05rem] tracking-[0.06em] text-bone">GigFinder</span>
+            <span className="block font-display text-[1.05rem] tracking-[0.06em] text-bone">GigBook</span>
             {admin && <span className="block eyebrow text-stamp-emailed mt-0.5">Admin</span>}
           </span>
         </div>

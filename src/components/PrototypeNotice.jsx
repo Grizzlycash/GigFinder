@@ -36,7 +36,7 @@ export function PrototypeNotice() {
         </DialogHeader>
 
         <p className="text-[0.85rem] leading-relaxed text-paper-ink">
-          This is a working prototype of GigFinder, not the finished product. Three things
+          This is a working prototype of GigBook, not the finished product. Three things
           worth knowing before you use it:
         </p>
 
@@ -129,7 +129,7 @@ export function FeedbackButton({ className }) {
 
     if (FEEDBACK_EMAIL) {
       window.location.href = `mailto:${FEEDBACK_EMAIL}`
-        + `?subject=${encodeURIComponent(`GigFinder feedback — ${BUILD_LABEL}`)}`
+        + `?subject=${encodeURIComponent(`GigBook feedback — ${BUILD_LABEL}`)}`
         + `&body=${encodeURIComponent(lines)}`;
       return;
     }

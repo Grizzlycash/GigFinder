@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { MapPin, Send, Phone } from 'lucide-react';
 import { state, signUp, signIn, PLANS } from '@/store/store';
 import { activeVenues } from '@/store/store';
 import { money } from '@/lib/format';
+import { accessIdentity } from '@/lib/access';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,7 +21,22 @@ const SELLING_POINTS = [
 export default function Landing() {
   const navigate = useNavigate();
   const [mode, setMode] = useState('signup');
+  const [invited, setInvited] = useState(null);
   const venueCount = state.venues.length;
+
+  // Behind Cloudflare Access the visitor has already proved their address to get this far.
+  // Sign them straight in if they've been here before; otherwise pre-fill the one field we
+  // already know so the invite feels like one step, not two.
+  useEffect(() => {
+    let cancelled = false;
+    accessIdentity().then((identity) => {
+      if (cancelled || !identity) return;
+      if (signIn(identity.email)) { navigate('/dashboard'); return; }
+      setInvited(identity);
+      setMode('signup');
+    });
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSignUp(e) {
     e.preventDefault();
@@ -54,8 +70,8 @@ export default function Landing() {
 
         <div className="relative">
           <div className="mb-6 flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-[2px] bg-flash-red font-display text-sm text-[#fbf7ec]">GF</span>
-            <span className="font-display text-xl tracking-[0.08em] text-bone">GigFinder</span>
+            <span className="grid size-9 place-items-center rounded-[2px] bg-flash-red font-display text-sm text-[#fbf7ec]">GB</span>
+            <span className="font-display text-xl tracking-[0.08em] text-bone">GigBook</span>
           </div>
 
           <p className="eyebrow mb-3 text-flash-red">Melbourne · {venueCount} rooms</p>
@@ -110,7 +126,21 @@ export default function Landing() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="su-email">Email</Label>
-                  <Input id="su-email" name="email" type="email" required placeholder="you@example.com" />
+                  <Input
+                    id="su-email"
+                    name="email"
+                    type="email"
+                    required
+                    placeholder="you@example.com"
+                    defaultValue={invited?.email || ''}
+                    readOnly={Boolean(invited)}
+                    data-invited={invited ? 'true' : undefined}
+                  />
+                  {invited && (
+                    <p className="text-[0.72rem] text-paper-muted">
+                      Confirmed from your invite — this is the address you signed in with.
+                    </p>
+                  )}
                 </div>
                 <Button type="submit" size="lg" className="w-full">Create account</Button>
                 <p className="text-[0.72rem] text-paper-muted">No card needed — you pick a plan at the end of setup.</p>

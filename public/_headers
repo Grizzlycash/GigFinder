@@ -1,0 +1,8 @@
+# Cloudflare Pages reads this file and applies the headers at the edge.
+# The app is a self-contained static bundle — self-hosted fonts, no CDN, no third-party
+# calls — so the policy can be tight without breaking anything.
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=()

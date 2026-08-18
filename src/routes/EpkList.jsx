@@ -92,7 +92,7 @@ export default function EpkList() {
         <Card className="mx-auto max-w-lg">
           <CardContent className="py-12 text-center">
             <h2 className="text-xl">No press kit yet</h2>
-            <p className="mx-auto mt-2 max-w-sm text-[0.85rem] text-paper-muted">Create one and GigFinder pre-fills it from your profile.</p>
+            <p className="mx-auto mt-2 max-w-sm text-[0.85rem] text-paper-muted">Create one and GigBook pre-fills it from your profile.</p>
             <Button className="mt-4" onClick={create} data-new><Plus className="size-4" /> Create my EPK</Button>
           </CardContent>
         </Card>

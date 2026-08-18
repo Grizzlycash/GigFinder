@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Turn the GigFinder venue spreadsheet into `src/data/venues.js`.
+ * Turn the GigBook venue spreadsheet into `src/data/venues.js`.
  *
  *   node scripts/import-venues.mjs path/to/GigBook_Database.csv
  *   node scripts/import-venues.mjs path/to/file.csv --geocode
@@ -127,7 +127,7 @@ async function geocode(rows) {
       const url = 'https://nominatim.openstreetmap.org/search'
         + `?format=json&limit=1&countrycodes=au&q=${encodeURIComponent(key)}`;
       try {
-        const res = await fetch(url, { headers: { 'User-Agent': 'GigFinder venue import (one-off)' } });
+        const res = await fetch(url, { headers: { 'User-Agent': 'GigBook venue import (one-off)' } });
         const [hit] = res.ok ? await res.json() : [];
         cache[key] = hit ? { lat: Number(hit.lat), lng: Number(hit.lon) } : null;
       } catch (err) {
@@ -148,7 +148,7 @@ async function geocode(rows) {
 /* ---------- output ---------- */
 function render(rows, { source, genres, types }) {
   const body = rows.map((v) => `  ${JSON.stringify(v)},`).join('\n');
-  return `// The GigFinder venue database — real Victorian rooms.
+  return `// The GigBook venue database — real Victorian rooms.
 //
 // GENERATED FILE. Do not hand-edit: re-run the importer and commit the result.
 //   node scripts/import-venues.mjs ${source}

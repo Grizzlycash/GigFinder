@@ -109,7 +109,7 @@ export default function Onboarding() {
       <header className="border-b border-ink-line bg-ink-raised px-5 py-3.5">
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <span className="grid size-7 place-items-center rounded-[2px] bg-flash-red font-display text-[0.8rem] text-[#fbf7ec]">GF</span>
-          <span className="font-display text-base tracking-[0.08em] text-bone">GigFinder</span>
+          <span className="font-display text-base tracking-[0.08em] text-bone">GigBook</span>
           <span className="ml-auto eyebrow text-bone-muted">Step {step} of 4</span>
         </div>
       </header>

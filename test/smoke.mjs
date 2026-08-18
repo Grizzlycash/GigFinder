@@ -496,7 +496,7 @@ await step('a tester can export their round', async () => {
   await page.click('[data-export-state]');
   const download = await wait;
   const dump = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
-  if (dump.app !== 'gigfinder') throw new Error('export is not tagged as a GigFinder file');
+  if (dump.app !== 'gigbook') throw new Error('export is not tagged as a GigBook file');
   if (!Array.isArray(dump.state?.venues) || !dump.state.venues.length) throw new Error('export carries no venues');
   if (!dump.state.outreach.length) throw new Error('export carries no outreach — the point is seeing what they did');
 });
@@ -523,7 +523,7 @@ await step('admin can clear the sample venues for good', async () => {
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
   const resurrected = await page.evaluate(
-    () => JSON.parse(localStorage.getItem('gigfinder:v1')).venues.filter((v) => v.source === 'seed').length,
+    () => JSON.parse(localStorage.getItem('gigbook:v1')).venues.filter((v) => v.source === 'seed').length,
   );
   if (resurrected !== 0) throw new Error(`${resurrected} sample venues came back after reload`);
   await shot('24-samples-cleared');
@@ -552,6 +552,29 @@ await step('keyboard focus is visible', async () => {
   if (!outline || outline.style === 'none' || parseFloat(outline.width) < 1) {
     throw new Error(`no visible focus ring: ${JSON.stringify(outline)}`);
   }
+});
+
+// Last, because it deliberately rewrites the store: a browser that used the app under its
+// old name must not open the renamed build to an empty account.
+await step('a GigFinder-era store survives the rename', async () => {
+  await page.goto(`${BASE}/#/dashboard`, { waitUntil: 'networkidle' });
+  await page.evaluate(() => {
+    const current = JSON.parse(localStorage.getItem('gigbook:v1'));
+    current.users[0].artistName = 'Legacy Act';
+    localStorage.removeItem('gigbook:v1');
+    localStorage.setItem('gigfinder:v1', JSON.stringify(current));
+  });
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(600);
+
+  const after = await page.evaluate(() => ({
+    adopted: JSON.parse(localStorage.getItem('gigbook:v1') || 'null')?.users?.[0]?.artistName,
+    legacyGone: localStorage.getItem('gigfinder:v1') === null,
+    signedIn: !location.hash.startsWith('#/onboarding') && location.hash !== '#/',
+  }));
+  if (after.adopted !== 'Legacy Act') throw new Error(`old store not adopted: ${after.adopted}`);
+  if (!after.legacyGone) throw new Error('old key left behind — it will drift out of sync');
+  if (!after.signedIn) throw new Error('adopted store did not keep the session');
 });
 
 await browser.close();
