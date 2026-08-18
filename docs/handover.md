@@ -1,16 +1,43 @@
 # Where GigBook stands
 
-Last updated: 12 August 2026 (test-round prep). Branch: `claude/gigbook-web-app-6tpcs3`.
+Last updated: 13 August 2026. Branch: `claude/gigbook-web-app-6tpcs3`, everything pushed.
 
 Read this first when picking the project back up — state, decisions already made, and the
 questions still open.
+
+## Pick up here
+
+Four things are waiting, in the order they unblock each other. The first three are yours;
+the fourth is a build job.
+
+1. **Make the GitHub repo private.** Settings → General → Danger Zone. Everything else about
+   going private is pointless until this is done — `src/data/venues.js` holds the whole
+   venue database and the repo is public right now.
+
+2. **Geocode the venues, so the Map screen works.** No row has coordinates, so Map shows its
+   empty state. Either:
+   - `node scripts/import-venues.mjs <csv> --geocode` on a machine with network access
+     (Node 18+, no `npm install` needed), commit the regenerated `src/data/venues.js`; or
+   - paste `scripts/geocode-sheet.gs` into the spreadsheet's Apps Script, run
+     *GigBook → Fill in coordinates*, export the CSV, and re-run the importer without the
+     flag — it reads `Latitude`/`Longitude` columns.
+
+   Worth fixing the **14 duplicate venues** the importer warns about in the same pass, since
+   both need a re-import.
+
+3. **Stand up Cloudflare Pages + Access** — the full runbook is `docs/hosting.md`. The slow
+   step is the nameserver change at the registrar; start it early. Don't forget
+   `ACCESS_SSO = true` in `src/config.js` (step 6) or testers get two login screens.
+
+4. **Then distribute.** `docs/test-round.md` has the sequence and a tester brief worth
+   pasting into an email.
 
 ## Running it
 
 ```bash
 npm install
 npm run dev     # http://localhost:5173
-npm test        # builds, then drives the whole app in Chromium (37 steps)
+npm test        # 25 unit tests, then drives the whole app in Chromium (38 steps)
 ```
 
 Stack: React + Vite + Tailwind v4 + shadcn/ui, hash routing, state in `localStorage`.
@@ -20,7 +47,24 @@ Cloudflare Access on gigbook.com.au, because a login can't be enforced on a stat
 The old GitHub Pages workflow (`.github/workflows/pages.yml`, publishing to
 `https://grizzlycash.github.io/GigFinder/`) stays until the cut-over, then gets switched off.
 
-## What happened in this session
+## What happened in the last two sessions
+
+**Renamed back to GigBook** to match the registered domain. The storage key moved with it, so
+`adoptLegacyStore()` in `src/store/store.js` carries a `gigfinder:v1` store over on first load
+— without it, anyone who used the earlier build would open the renamed app to an empty
+account. A browser step asserts it.
+
+**The real venue database landed** — 222 Victorian rooms, generated from the spreadsheet by
+`scripts/import-venues.mjs`. The fictional seed is gone entirely.
+
+**The app now says what it is** — first-run notice, sidebar stamp, a line by the send button —
+because sending is convincing enough that a tester could believe they'd emailed a venue.
+
+**The ground got depth, grain and a paste-up wall** (`src/index.css`, `src/assets/paste-up.svg`).
+The reason nothing worked before: `AppShell`'s root div painted an opaque `bg-background`
+over the whole viewport. Check for that before tuning any background value.
+
+## What happened in the session before those
 
 The app was rebuilt from scratch on React + Tailwind + shadcn/ui and restyled to
 `docs/design-brief.md` (gig poster / tattoo flash sheet), replacing the previous
