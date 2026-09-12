@@ -241,12 +241,29 @@ State is in `localStorage` under `gigbook:v1` — nothing leaves the browser. `s
 the only module that touches persistence, so swapping it for API calls is the single change
 needed to move to a real backend.
 
-**The venue database is real.** `src/data/venues.js` holds 559 rooms across nine countries
+**The venue database is real.** `src/data/venues.js` holds 544 rooms across 9 countries
 and is **generated** from the spreadsheet — don't hand-edit it:
 
 ```bash
-node scripts/import-venues.mjs path/to/GigBook_Database.csv --geocode
+node scripts/import-venues.mjs path/to/GigBook_Database.xlsx --geocode
+node scripts/export-venues.mjs                  # the database back out as .xlsx and .csv
 ```
+
+**Reads `.xlsx` directly** (first worksheet) as well as `.csv`, so there's no export step
+before an import — one less chance to import last week's data. `src/lib/xlsx.js` does it
+with no parser dependency beyond the zip reader, and works in the browser too, so
+Admin → Import spreadsheet takes a workbook as well.
+
+**Rooms entered twice are merged**, field by field, the fuller row winning ties — between
+two partial records each usually holds something the other is missing. Every genuine
+conflict (two different booking emails, two capacities) is printed, because a conflict means
+the sheet disagrees with itself and no import can settle that. `--keep-duplicates` imports
+verbatim instead.
+
+The importer also flags rows whose location fields contradict each other — an Australian
+address with a non-Australian Country, or Suburb/City/State all holding the same value. It
+reports and imports them as-is rather than guessing: a wrong country is a fact about the
+spreadsheet, and quietly "fixing" it hides the problem.
 
 The importer reads the sheet's own `Suburb`, `City`, `State/Region`, `Country` and `Postcode`
 columns, only falling back to picking the address apart when they're absent. **`city` takes

@@ -22,8 +22,13 @@ the fourth is a build job.
      *GigBook → Fill in coordinates*, export the CSV, and re-run the importer without the
      flag — it reads `Latitude`/`Longitude` columns.
 
-   Worth fixing the **14 duplicate venues** the importer warns about in the same pass, since
-   both need a re-import.
+   Duplicates are merged automatically now, but the importer prints every field the
+   duplicate rows disagreed on — worth reading that list and settling it in the sheet.
+
+   It also flags **6 rows with an Australian address but a non-Australian Country** (Pirates
+   Tavern, Customs House Hotel, Royal Yacht Club of Victoria, The Gem, The Hamilton Station
+   Hotel, Transit Bar) and **73 rows repeating one value across Suburb, City and
+   State/Region**. Both are source-sheet errors, imported as-is rather than guessed at.
 
 3. **Stand up Cloudflare Pages + Access** — the full runbook is `docs/hosting.md`. The slow
    step is the nameserver change at the registrar; start it early. Don't forget
@@ -37,7 +42,7 @@ the fourth is a build job.
 ```bash
 npm install
 npm run dev     # http://localhost:5173
-npm test        # 37 unit tests, then drives the whole app in Chromium (38 steps)
+npm test        # 47 unit tests, then drives the whole app in Chromium (38 steps)
 ```
 
 Stack: React + Vite + Tailwind v4 + shadcn/ui, hash routing, state in `localStorage`.

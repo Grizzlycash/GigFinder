@@ -9,13 +9,17 @@ the awkward bits.
    `scripts/import-venues.mjs` — don't hand-edit it. The master sheet's columns are
    `Name, Address, Street, Suburb, City, State/Region, Country, Postcode, Website, Phone,
    Email, Genres, Capacity, Description`; both importers recognise those plus common aliases.
-   Export it as CSV first — neither importer reads `.xlsx`.
+   Both importers read `.xlsx` directly, so there's no export step.
 
    To reload after the spreadsheet changes:
 
    ```bash
-   node scripts/import-venues.mjs path/to/GigBook_Database.csv --geocode
+   node scripts/import-venues.mjs path/to/GigBook_Database.xlsx --geocode
    ```
+
+   Duplicated rooms are merged and any conflicting fields printed; location contradictions
+   (an Australian address with a non-Australian Country) are flagged and imported as-is.
+   `node scripts/export-venues.mjs` writes the current database back out as .xlsx and .csv.
 
    `--geocode` fills in the coordinates through OpenStreetMap, rate-limited to one request a
    second and cached, so a re-run costs nothing. **Without it the Map screen has nothing to

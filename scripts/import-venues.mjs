@@ -2,8 +2,12 @@
 /**
  * Turn the GigBook venue spreadsheet into `src/data/venues.js`.
  *
- *   node scripts/import-venues.mjs path/to/GigBook_Database.csv
+ *   node scripts/import-venues.mjs path/to/GigBook_Database.xlsx
  *   node scripts/import-venues.mjs path/to/file.csv --geocode
+ *   node scripts/import-venues.mjs path/to/file.xlsx --keep-duplicates
+ *
+ * Reads .xlsx (first worksheet) or .csv. Rooms entered twice are merged by default; pass
+ * --keep-duplicates to import the sheet verbatim instead.
  *
  * Kept as a script rather than a one-off edit because the spreadsheet is the source of
  * truth and will change. Re-run it and commit the result.
@@ -22,6 +26,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 // One alias table, shared with the admin import screen — two copies is how they drifted.
 import { ALIASES, normaliseHeader, parseCsv, parseCapacity, cellValue as value } from '../src/lib/importMap.js';
+import { readXlsx, isSpreadsheetFile } from '../src/lib/xlsx.js';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CACHE = path.join(ROOT, '.venue-geocode-cache.json');
@@ -149,11 +154,15 @@ export const ALL_GENRES = ${JSON.stringify(genres)};
 /* ---------- run ---------- */
 const [, , csvPath, ...flags] = process.argv;
 if (!csvPath) {
-  console.error('usage: node scripts/import-venues.mjs <csv> [--geocode]');
+  console.error('usage: node scripts/import-venues.mjs <csv|xlsx> [--geocode] [--keep-duplicates]');
   process.exit(2);
 }
 
-const table = parseCsv(fs.readFileSync(csvPath, 'utf8'));
+// The master sheet lives as .xlsx, so read it directly — an export-to-CSV step before every
+// import is one more chance to import last week's data.
+const table = isSpreadsheetFile(csvPath)
+  ? readXlsx(fs.readFileSync(csvPath))
+  : parseCsv(fs.readFileSync(csvPath, 'utf8'));
 const header = table[0].map(normaliseHeader);
 /** First alias present wins, so preference comes from ALIASES rather than column order. */
 const col = (field) => {
@@ -235,26 +244,116 @@ for (const line of table.slice(1)) {
 }
 
 /**
- * The same room entered twice, usually with a different address format and a different
- * booking email. Reported rather than merged: picking a winner would pick who gets pitched,
- * and only the person who keeps the spreadsheet knows which address is current.
+ * The same room entered twice — usually a different address format and a different booking
+ * email. Merged field by field rather than by dropping one row: between two partial
+ * records, each tends to hold something the other is missing.
+ *
+ * The fuller row wins ties, and every genuine conflict is printed. A conflict means the
+ * spreadsheet disagrees with itself, and no import can resolve that — only whoever keeps
+ * the sheet knows which booking address is current.
  */
-const byRoom = new Map();
-for (const row of rows) {
-  const key = `${row.name.toLowerCase().replace(/[^a-z0-9]/g, '')}|${row.city.toLowerCase()}`;
-  if (!byRoom.has(key)) byRoom.set(key, []);
-  byRoom.get(key).push(row);
+function mergeDuplicates(all) {
+  const groups = new Map();
+  for (const row of all) {
+    const key = `${row.name.toLowerCase().replace(/[^a-z0-9]/g, '')}|${row.city.toLowerCase()}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+
+  const filled = (row) => Object.values(row).filter((v) => v !== '' && v !== 0 && v != null
+    && !(Array.isArray(v) && v.length === 0)).length;
+  const isEmpty = (v) => v === '' || v === 0 || v == null || (Array.isArray(v) && !v.length);
+
+  const merged = [];
+  const conflicts = [];
+  let collapsed = 0;
+
+  for (const group of groups.values()) {
+    if (group.length === 1) { merged.push(group[0]); continue; }
+
+    // Richest row first, so it supplies the values and the others only fill its gaps.
+    const [base, ...rest] = [...group].sort((a, b) => filled(b) - filled(a));
+    const winner = { ...base };
+
+    for (const other of rest) {
+      for (const [field, value] of Object.entries(other)) {
+        if (field === 'id' || isEmpty(value)) continue;
+        if (isEmpty(winner[field])) { winner[field] = value; continue; }
+        if (Array.isArray(value)) {
+          // Genre lists just union.
+          winner[field] = [...new Set([...winner[field], ...value])];
+          continue;
+        }
+        if (String(winner[field]) !== String(value) && ['contactEmail', 'website', 'phone', 'capacity'].includes(field)) {
+          conflicts.push({ name: winner.name, city: winner.city, field, kept: winner[field], dropped: value });
+        }
+      }
+    }
+
+    merged.push(winner);
+    collapsed += group.length - 1;
+  }
+
+  return { merged, conflicts, collapsed, groups: [...groups.values()].filter((g) => g.length > 1) };
 }
-const dupes = [...byRoom.values()].filter((g) => g.length > 1);
-if (dupes.length) {
-  console.warn(`\n⚠  ${dupes.length} venue(s) appear more than once — fix the spreadsheet and re-run:`);
-  for (const group of dupes) {
-    console.warn(`   ${group[0].name} (${group[0].city})`);
-    for (const row of group) {
-      console.warn(`     · ${row.contactEmail || 'no email'} · cap ${row.capacity || '—'} · ${row.address}`);
+
+if (flags.includes('--keep-duplicates')) {
+  const { groups } = mergeDuplicates(rows);
+  if (groups.length) {
+    console.warn(`\n⚠  ${groups.length} venue(s) appear more than once and were kept as-is:`);
+    for (const group of groups) console.warn(`   ${group[0].name} (${group[0].city}) ×${group.length}`);
+    console.warn('');
+  }
+} else {
+  const { merged, conflicts, collapsed, groups } = mergeDuplicates(rows);
+  if (collapsed) {
+    console.log(`\nmerged ${collapsed} duplicate row(s) into ${groups.length} venue(s):`);
+    for (const group of groups) console.log(`   ${group[0].name} (${group[0].city}) ×${group.length}`);
+  }
+  if (conflicts.length) {
+    console.warn(`\n⚠  ${conflicts.length} field(s) disagreed between duplicate rows. The first value`);
+    console.warn('   was kept — check these in the spreadsheet, since only you know which is current:');
+    for (const c of conflicts) {
+      console.warn(`   ${c.name} (${c.city}) · ${c.field}: kept "${c.kept}", dropped "${c.dropped}"`);
     }
   }
-  console.warn('');
+  console.log('');
+  rows.length = 0;
+  rows.push(...merged);
+}
+
+/**
+ * Rows whose location fields disagree with themselves.
+ *
+ * Reported, never corrected. A wrong country is a fact about the spreadsheet, and guessing
+ * at it would hide the problem instead of fixing the source — but shipping it silently puts
+ * "Collingwood, New Zealand" in front of a tester, which costs more trust than it saves
+ * effort.
+ */
+function locationWarnings(all) {
+  const AU_SIGNAL = /\b(VIC|NSW|QLD|WA|SA|TAS|NT|ACT)\b|\bAustralia\b/;
+  const mislabelled = all.filter((v) => v.country && v.country !== 'Australia'
+    && AU_SIGNAL.test(`${v.address} ${v.state}`));
+  // Suburb, City and State/Region all holding the same value is a fill error, not a place.
+  const collapsed = all.filter((v) => v.city && v.city === v.metro && v.city === v.state);
+  return { mislabelled, collapsed };
+}
+
+{
+  const { mislabelled, collapsed } = locationWarnings(rows);
+  if (mislabelled.length) {
+    console.warn(`\n⚠  ${mislabelled.length} row(s) have an Australian address but a different Country.`);
+    console.warn('   Imported exactly as the sheet has them — fix the sheet, not the import:');
+    for (const v of mislabelled) {
+      console.warn(`   ${v.name} · ${v.address || v.city} → Country "${v.country}"`);
+    }
+  }
+  if (collapsed.length) {
+    console.warn(`\n⚠  ${collapsed.length} row(s) repeat the same value in Suburb, City and`);
+    console.warn(`   State/Region (e.g. ${collapsed[0].name}: "${collapsed[0].city}"), which usually`);
+    console.warn('   means a column was filled down. Harmless to import, wrong on screen.');
+  }
+  if (mislabelled.length || collapsed.length) console.warn('');
 }
 
 if (flags.includes('--geocode')) {

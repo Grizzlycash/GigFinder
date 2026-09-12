@@ -9,6 +9,7 @@ import {
 } from '@/store/store';
 import { VENUE_TYPES, slugify } from '@/data/venues';
 import { FIELDS, guessMapping, parseCsv, parseCapacity } from '@/lib/importMap';
+import { readXlsx, isSpreadsheetFile } from '@/lib/xlsx';
 import AppShell from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -277,10 +278,27 @@ function ImportTab() {
   const [asPending, setAsPending] = useState(false);
   const [text, setText] = useState('');
 
-  function begin(csv, filename) {
-    const rows = parseCsv(csv);
-    if (rows.length < 2) { toast.error('That CSV has no data rows'); return; }
+  function begin(rows, filename) {
+    // A guard, because the mistake this catches is silent: handed a string instead of rows,
+    // the length check passes and the failure surfaces much later as `.map is not a function`.
+    if (!Array.isArray(rows) || !Array.isArray(rows[0])) {
+      toast.error(`Could not read ${filename}`, { description: 'Expected rows of cells.' });
+      return;
+    }
+    if (rows.length < 2) { toast.error(`${filename} has no data rows`); return; }
     setPending({ rows, mapping: guessMapping(rows[0]), filename });
+  }
+
+  /** Takes the master sheet as .xlsx, or a CSV export of it. */
+  async function readFile(file) {
+    try {
+      const rows = isSpreadsheetFile(file.name)
+        ? readXlsx(await file.arrayBuffer())
+        : parseCsv(await file.text());
+      begin(rows, file.name);
+    } catch (err) {
+      toast.error(`Could not read ${file.name}`, { description: err.message });
+    }
   }
 
   function run() {
@@ -346,23 +364,24 @@ function ImportTab() {
           <div
             className="rounded-[3px] border border-dashed border-paper-line bg-paper-shade/60 p-8 text-center"
             onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) f.text().then((t) => begin(t, f.name)); }}
+            onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) readFile(f); }}
           >
             <Upload className="mx-auto size-6 text-paper-muted" />
-            <p className="mt-2 font-display uppercase tracking-[0.08em]">Drop the venue CSV here</p>
+            <p className="mt-2 font-display uppercase tracking-[0.08em]">Drop the venue spreadsheet here</p>
+            <p className="mt-1 text-[0.72rem] text-paper-muted">.xlsx or .csv</p>
             <p className="mt-1 text-[0.78rem] text-paper-muted">or</p>
             <Input
               type="file"
-              accept=".csv,text/csv"
+              accept=".xlsx,.xlsm,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               className="mx-auto mt-2 max-w-64"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) f.text().then((t) => begin(t, f.name)); }}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) readFile(f); }}
             />
           </div>
           <div className="mt-5 space-y-1.5">
             <Label htmlFor="csv-paste">…or paste CSV</Label>
             <Textarea id="csv-paste" rows={6} value={text} onChange={(e) => setText(e.target.value)}
               placeholder="Name,Address,Suburb,City,State/Region,Country,Postcode,Website,Phone,Email,Genres,Capacity,Description" />
-            <Button className="mt-2" onClick={() => (text.trim() ? begin(text, 'pasted data') : toast.error('Paste some CSV first'))} data-parse-paste>
+            <Button className="mt-2" onClick={() => (text.trim() ? begin(parseCsv(text), 'pasted data') : toast.error('Paste some CSV first'))} data-parse-paste>
               Read CSV
             </Button>
           </div>
