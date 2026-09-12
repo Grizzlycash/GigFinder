@@ -27,9 +27,9 @@ the fourth is a build job.
 
    The 6 rows with an Australian address but a non-Australian Country (Pirates Tavern,
    Customs House Hotel, Royal Yacht Club of Victoria, The Gem, The Hamilton Station Hotel,
-   Transit Bar) are now fixed in the sheet and the database. **73 rows still repeat one
-   value across Suburb, City and State/Region** — harmless to import, wrong on screen —
-   and are imported as-is rather than guessed at.
+   Transit Bar) and the 73 rows that repeated one value across Suburb, City and
+   State/Region are now both fixed in the sheet and the database — neither warning fires
+   on the current import.
 
 3. **Stand up Cloudflare Pages + Access** — the full runbook is `docs/hosting.md`. The slow
    step is the nameserver change at the registrar; start it early. Don't forget
