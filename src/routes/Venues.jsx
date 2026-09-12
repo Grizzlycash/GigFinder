@@ -23,10 +23,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { fmtDateTime, plural, toCsv, download, initials, mapsUrl } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
+/** Radix forbids an empty item value, so "no filter" needs a token of its own. */
+const ALL = '__all';
+
 const SIZES = [
-  { id: 'small', label: 'Small <150' },
-  { id: 'mid', label: 'Mid 150–400' },
-  { id: 'large', label: 'Large 400+' },
+  { id: 'small', label: 'Small — under 150' },
+  { id: 'mid', label: 'Mid — 150 to 400' },
+  { id: 'large', label: 'Large — 400+' },
 ];
 
 const STATUS_FILTERS = [
@@ -55,6 +58,61 @@ function FilterChip({ active, children, ...props }) {
       {children}
     </button>
   );
+}
+
+/**
+ * One filter menu, styled to sit in the same row as the status chips.
+ *
+ * The trigger shows the category name until something is picked, so the row reads as the
+ * questions being asked — Country, State, City, Genre, Capacity — rather than five
+ * identical boxes all saying "All". Once picked it shows the value in flash red, which is
+ * the only cue that a filter is narrowing the list.
+ */
+function FilterSelect({ label, allLabel, value, onValueChange, options }) {
+  const active = value !== ALL;
+  const current = options.find((o) => o.id === value);
+
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger
+        aria-label={label}
+        data-select={label.toLowerCase()}
+        data-value={value}
+        className={cn(
+          'h-auto w-auto min-w-0 max-w-[13rem] gap-1.5 rounded-[2px] border px-2.5 py-1',
+          'font-display uppercase tracking-[0.08em] text-[0.68rem] transition-colors',
+          active
+            ? 'border-flash-red bg-flash-red text-[#fbf7ec]'
+            : 'border-ink-line-strong bg-transparent text-bone-muted hover:bg-ink-hover hover:text-bone',
+        )}
+      >
+        {/* Not <SelectValue>: the trigger deliberately says "Country", not "All countries". */}
+        <span className="truncate">{active ? (current?.label ?? value) : label}</span>
+      </SelectTrigger>
+      <SelectContent className="max-w-[min(22rem,calc(100vw-2rem))]">
+        <SelectItem value={ALL}>{allLabel}</SelectItem>
+        {options.map((o) => (
+          <SelectItem key={o.id} value={o.id}>
+            {o.label}
+            {o.count != null && <span className="ml-1.5 text-paper-muted">{o.count}</span>}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/** Distinct values of one field, alphabetical, each with how many rooms carry it. */
+function tally(venues, field) {
+  const counts = new Map();
+  for (const v of venues) {
+    for (const key of Array.isArray(v[field]) ? v[field] : [v[field]]) {
+      if (key) counts.set(key, (counts.get(key) || 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([id, count]) => ({ id, label: id, count }));
 }
 
 function AddVenueDialog({ open, onOpenChange }) {
@@ -440,12 +498,38 @@ export default function Venues() {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('all');
-  const [genre, setGenre] = useState(null);
-  const [size, setSize] = useState(null);
+  const [country, setCountry] = useState(ALL);
+  const [region, setRegion] = useState(ALL);
+  const [city, setCity] = useState(ALL);
+  const [genre, setGenre] = useState(ALL);
+  const [size, setSize] = useState(ALL);
   const [sort, setSort] = useState('name');
-  const [allGenres, setAllGenres] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [listOpen, setListOpen] = useState(false);
+
+  /**
+   * Country narrows State, and the pair narrows City and Genre — 544 rooms across 9
+   * countries make a flat city list unusable, and a genre chip for a scene that isn't in
+   * the chosen state is just a dead end. Only the menus below the current pick are
+   * narrowed, so Country always offers all nine.
+   */
+  const menus = useMemo(() => {
+    const all = activeVenues();
+    const inCountry = country === ALL ? all : all.filter((v) => v.country === country);
+    const inRegion = region === ALL ? inCountry : inCountry.filter((v) => v.state === region);
+    const genres = tally(inRegion, 'genres').filter((g) => ALL_GENRES.includes(g.id));
+    // A genre picked before the region narrowed may no longer be on offer here. Keep it
+    // listed so the menu still shows what is actually filtering the list.
+    if (genre !== ALL && !genres.some((g) => g.id === genre)) {
+      genres.unshift({ id: genre, label: genre, count: 0 });
+    }
+    return {
+      countries: tally(all, 'country'),
+      regions: tally(inCountry, 'state'),
+      cities: tally(inRegion, 'metro'),
+      genres,
+    };
+  }, [country, region, genre]);
 
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -463,7 +547,10 @@ export default function Venues() {
         if (!due) return false;
       }
 
-      if (genre && !v.genres.includes(genre)) return false;
+      if (country !== ALL && v.country !== country) return false;
+      if (region !== ALL && v.state !== region) return false;
+      if (city !== ALL && v.metro !== city) return false;
+      if (genre !== ALL && !v.genres.includes(genre)) return false;
       if (size === 'small' && v.capacity >= 150) return false;
       if (size === 'mid' && (v.capacity < 150 || v.capacity >= 400)) return false;
       if (size === 'large' && v.capacity < 400) return false;
@@ -477,7 +564,20 @@ export default function Venues() {
       capAsc: (a, b) => a.capacity - b.capacity,
     };
     return list.sort(sorters[sort]);
-  }, [q, status, genre, size, sort]);
+  }, [q, status, country, region, city, genre, size, sort]);
+
+  const filtered = [status !== 'all', country !== ALL, region !== ALL, city !== ALL, genre !== ALL, size !== ALL, Boolean(q)]
+    .some(Boolean);
+
+  function clearFilters() {
+    setQ('');
+    setStatus('all');
+    setCountry(ALL);
+    setRegion(ALL);
+    setCity(ALL);
+    setGenre(ALL);
+    setSize(ALL);
+  }
 
   const selected = venueById(id) || rows[0] || null;
   const privateCount = myPrivateVenues().length;
@@ -538,29 +638,54 @@ export default function Venues() {
               {s.label}
             </FilterChip>
           ))}
-          <span className="mx-1 h-4 w-px bg-ink-line-strong" />
-          <span className="eyebrow mr-1 text-bone-muted/70">Size</span>
-          {SIZES.map((s) => (
-            <FilterChip key={s.id} active={size === s.id} onClick={() => setSize(size === s.id ? null : s.id)} data-filter="size" data-value={s.id}>
-              {s.label}
-            </FilterChip>
-          ))}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="eyebrow mr-1 text-bone-muted/70">Genre</span>
-          {(allGenres ? ALL_GENRES : ALL_GENRES.slice(0, 8)).map((g) => (
-            <FilterChip key={g} active={genre === g} onClick={() => setGenre(genre === g ? null : g)} data-filter="genre" data-value={g}>
-              {g}
-            </FilterChip>
-          ))}
-          {ALL_GENRES.length > 8 && (
+          <span className="eyebrow mr-1 text-bone-muted/70">Filter</span>
+          <FilterSelect
+            label="Country"
+            allLabel="All countries"
+            value={country}
+            // Picking a country strands whatever state and city were chosen under the old one.
+            onValueChange={(v) => { setCountry(v); setRegion(ALL); setCity(ALL); }}
+            options={menus.countries}
+          />
+          <FilterSelect
+            label="State"
+            allLabel="All states"
+            value={region}
+            onValueChange={(v) => { setRegion(v); setCity(ALL); }}
+            options={menus.regions}
+          />
+          <FilterSelect
+            label="City"
+            allLabel="All cities"
+            value={city}
+            onValueChange={setCity}
+            options={menus.cities}
+          />
+          <FilterSelect
+            label="Genre"
+            allLabel="Any genre"
+            value={genre}
+            onValueChange={setGenre}
+            options={menus.genres}
+          />
+          <FilterSelect
+            label="Capacity"
+            allLabel="Any capacity"
+            value={size}
+            onValueChange={setSize}
+            options={SIZES}
+          />
+          {filtered && (
             <button
               type="button"
-              onClick={() => setAllGenres((v) => !v)}
+              onClick={clearFilters}
+              data-reset
               className="shrink-0 px-1.5 py-1 font-display uppercase tracking-[0.08em] text-[0.68rem] text-flash-red hover:underline focus-visible:outline-2 focus-visible:outline-flash-red"
             >
-              {allGenres ? 'Fewer' : `+${ALL_GENRES.length - 8} more`}
+              Reset
             </button>
           )}
         </div>
@@ -587,7 +712,7 @@ export default function Venues() {
                   variant="paper"
                   size="sm"
                   className="mt-3"
-                  onClick={() => { setQ(''); setStatus('all'); setGenre(null); setSize(null); }}
+                  onClick={clearFilters}
                   data-clear
                 >
                   Clear filters

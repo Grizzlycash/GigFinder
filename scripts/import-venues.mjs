@@ -336,11 +336,18 @@ function locationWarnings(all) {
     && AU_SIGNAL.test(`${v.address} ${v.state}`));
   // Suburb, City and State/Region all holding the same value is a fill error, not a place.
   const collapsed = all.filter((v) => v.city && v.city === v.metro && v.city === v.state);
-  return { mislabelled, collapsed };
+  // A postcode in a place-name column. Both feed filter menus, where "Queenstown 9300"
+  // and "3810" become their own entries and split a town's rooms across two lines.
+  const numbered = all.filter((v) => /\d{4}/.test(v.city || '') || /\d{4}/.test(v.metro || ''));
+  // No region at all. On its own that's only a gap in a filter menu, but it reliably marks
+  // rows that were entered by hand in a hurry — every one of the 19 found this way also had
+  // the wrong country or a postcode where the town should be.
+  const stateless = all.filter((v) => !v.state);
+  return { mislabelled, collapsed, numbered, stateless };
 }
 
 {
-  const { mislabelled, collapsed } = locationWarnings(rows);
+  const { mislabelled, collapsed, numbered, stateless } = locationWarnings(rows);
   if (mislabelled.length) {
     console.warn(`\n⚠  ${mislabelled.length} row(s) have an Australian address but a different Country.`);
     console.warn('   Imported exactly as the sheet has them — fix the sheet, not the import:');
@@ -353,7 +360,17 @@ function locationWarnings(all) {
     console.warn(`   State/Region (e.g. ${collapsed[0].name}: "${collapsed[0].city}"), which usually`);
     console.warn('   means a column was filled down. Harmless to import, wrong on screen.');
   }
-  if (mislabelled.length || collapsed.length) console.warn('');
+  if (numbered.length) {
+    console.warn(`\n⚠  ${numbered.length} row(s) carry a postcode in Suburb or City, which splits`);
+    console.warn('   a town across two entries in the venue filters:');
+    for (const v of numbered) console.warn(`   ${v.name} · Suburb "${v.city}" · City "${v.metro}"`);
+  }
+  if (stateless.length) {
+    console.warn(`\n⚠  ${stateless.length} row(s) have no State/Region. Worth reading the whole row —`);
+    console.warn('   a blank region usually comes with other fields in the wrong column:');
+    for (const v of stateless) console.warn(`   ${v.name} · ${v.address || v.city} · ${v.country || 'no country'}`);
+  }
+  if (mislabelled.length || collapsed.length || numbered.length || stateless.length) console.warn('');
 }
 
 if (flags.includes('--geocode')) {

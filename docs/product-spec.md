@@ -61,9 +61,17 @@ right-hand column of follow-up reminders (Pro; upsell on Basic), database covera
 pipeline summary.
 
 ### 3.4 Venues
-A three-pane browser. Across the top: search, sort, CSV export (Pro) and "Add venue", then a
-chip bar filtering by pipeline status, genre and room size. Left: the venue list, each row an
-initials tile, name, city, capacity and the artist's own pipeline stage. Right: the detail
+A three-pane browser. Across the top: search, sort, CSV export (Pro) and "Add venue". Below
+that, two filter rows: pipeline **status stays a row of chips**, because it is the one filter
+an artist toggles constantly while working a list and it doubles as a read-out of where the
+list stands. Everything else is a **menu** — Country, State, City, Genre, Capacity — since
+544 rooms across 9 countries and 85 genres cannot be chips without burying the list.
+
+Country narrows State, and the pair narrows City and Genre, so the menus only ever offer
+values that exist in the current selection; each option carries its room count. A menu shows
+its category name until something is picked, then the value in flash red, so the row reads as
+the questions being asked rather than five boxes saying "All". Left: the venue list, each row
+an initials tile, name, city, capacity and the artist's own pipeline stage. Right: the detail
 pane for the selected venue.
 
 Adding a venue offers two destinations — keep it **private** to the account (live

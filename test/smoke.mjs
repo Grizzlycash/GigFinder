@@ -79,6 +79,13 @@ const step = async (label, fn) => {
 };
 const shot = (name) => page.screenshot({ path: path.join(SHOTS, `${name}.png`) });
 
+/** A venue filter menu. Options carry a room count, so this matches the leading label. */
+const pickFilter = async (label, optionText) => {
+  await page.click(`[data-select="${label}"]`);
+  await page.getByRole('option').filter({ hasText: optionText }).first().click();
+  await page.waitForTimeout(250);
+};
+
 await step('landing loads', async () => {
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.waitForSelector('#su-artist');
@@ -159,10 +166,38 @@ await step('venues — flash sheet, filters, detail', async () => {
   if (await page.locator('.stub').count() === 0) throw new Error('search returned no venues');
   await page.fill('[data-q]', '');
   await page.waitForTimeout(300);
-  await page.click('[data-filter="size"][data-value="mid"]');
+
+  // Status stays a row of buttons; everything else is a menu.
+  await page.click('[data-filter="status"][data-value="none"]');
   await page.waitForTimeout(200);
-  await page.click('[data-filter="size"][data-value="mid"]');
+  await page.click('[data-filter="status"][data-value="all"]');
   await page.waitForTimeout(200);
+
+  const total = await page.locator('.stub').count();
+  await pickFilter('capacity', 'Large — 400+');
+  const big = await page.locator('.stub').count();
+  if (big === 0 || big >= total) throw new Error(`capacity filter did not narrow: ${total} → ${big}`);
+
+  await pickFilter('capacity', 'Any capacity');
+  if (await page.locator('.stub').count() !== total) throw new Error('clearing capacity did not restore the list');
+
+  // Country narrows State, which narrows City — so after picking New Zealand the State
+  // menu must not still be offering VIC.
+  await pickFilter('country', 'New Zealand');
+  const nz = await page.locator('.stub').count();
+  if (nz === 0 || nz >= total) throw new Error(`country filter did not narrow: ${total} → ${nz}`);
+  await page.click('[data-select="state"]');
+  const states = await page.locator('[role=option]').allInnerTexts();
+  await page.keyboard.press('Escape');
+  if (states.some((s) => /^VIC/.test(s))) throw new Error(`state menu still offers VIC under New Zealand: ${states}`);
+  if (!states.some((s) => /Otago|Auckland|Wellington/.test(s))) {
+    throw new Error(`state menu has no New Zealand regions: ${states}`);
+  }
+
+  await page.click('[data-reset]');
+  await page.waitForTimeout(200);
+  if (await page.locator('.stub').count() !== total) throw new Error('reset did not restore the full list');
+
   await page.click('.stub >> nth=2');
   await page.waitForTimeout(300);
 
