@@ -77,7 +77,6 @@ function AddVenueDialog({ open, onOpenChange }) {
     const venue = addVenue({
       name: String(d.name).trim(),
       city: String(d.city).trim(),
-      state: 'VIC',
       capacity: Number(d.capacity) || 0,
       type: String(d.type || 'Pub'),
       contactName: String(d.contactName || '').trim(),
@@ -312,7 +311,8 @@ function DetailPanel({ venue, onSaveToList }) {
         <CardContent className="p-4">
           <h2 className="text-xl leading-tight">{venue.name}</h2>
           <p className="mt-1 text-[0.8rem] text-paper-muted">
-            {venue.city}, {venue.state} · Cap. {venue.capacity || '—'} · {venue.type}
+            {[venue.city, venue.state, venue.country !== 'Australia' ? venue.country : '']
+              .filter(Boolean).join(', ')} · Cap. {venue.capacity || '—'} · {venue.type}
           </p>
           {venue.capacityNote && venue.capacityNote !== String(venue.capacity) && (
             <p className="text-[0.75rem] text-paper-muted">{venue.capacityNote}</p>
@@ -450,7 +450,8 @@ export default function Venues() {
   const rows = useMemo(() => {
     const term = q.trim().toLowerCase();
     const list = activeVenues().filter((v) => {
-      if (term && ![v.name, v.city, v.type, v.contactName, v.genres.join(' ')].join(' ').toLowerCase().includes(term)) return false;
+      const haystack = [v.name, v.city, v.metro, v.state, v.country, v.type, v.contactName, v.genres.join(' ')];
+      if (term && !haystack.filter(Boolean).join(' ').toLowerCase().includes(term)) return false;
 
       const out = outreachForVenue(v.id);
       if (status === 'none' && out) return false;

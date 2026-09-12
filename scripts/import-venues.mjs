@@ -8,8 +8,9 @@
  * Kept as a script rather than a one-off edit because the spreadsheet is the source of
  * truth and will change. Re-run it and commit the result.
  *
- * Expected columns (case-insensitive, extras ignored):
- *   Venue, Address, Website, Phone, Email, Genres, Capacity, Description
+ * Expected columns (case-insensitive, extras ignored, aliases in IDX below):
+ *   Name, Address, Suburb, City, State/Region, Country, Postcode, Website, Phone, Email,
+ *   Genres, Capacity, Description
  * Latitude/Longitude are used when present. When they're absent, `--geocode` looks the
  * addresses up through OpenStreetMap's Nominatim, rate-limited to one request a second per
  * their usage policy, cached in .venue-geocode-cache.json so a re-run costs nothing.
@@ -19,47 +20,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// One alias table, shared with the admin import screen — two copies is how they drifted.
+import { ALIASES, normaliseHeader, parseCsv, parseCapacity, cellValue as value } from '../src/lib/importMap.js';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CACHE = path.join(ROOT, '.venue-geocode-cache.json');
 const OUT = path.join(ROOT, 'src', 'data', 'venues.js');
-
-/* ---------- CSV ---------- */
-function parseCsv(text) {
-  const rows = [];
-  let row = [];
-  let cell = '';
-  let quoted = false;
-  for (let i = 0; i < text.length; i += 1) {
-    const c = text[i];
-    if (quoted) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { cell += '"'; i += 1; } else quoted = false;
-      } else cell += c;
-      continue;
-    }
-    if (c === '"') { quoted = true; continue; }
-    if (c === ',') { row.push(cell); cell = ''; continue; }
-    if (c === '\n' || c === '\r') {
-      if (c === '\r' && text[i + 1] === '\n') i += 1;
-      row.push(cell);
-      if (row.some((v) => v.trim() !== '')) rows.push(row);
-      row = [];
-      cell = '';
-      continue;
-    }
-    cell += c;
-  }
-  row.push(cell);
-  if (row.some((v) => v.trim() !== '')) rows.push(row);
-  return rows.map((r) => r.map((v) => v.trim()));
-}
-
-/** The spreadsheet writes unknowns several ways; they all mean "we don't have it". */
-function value(raw) {
-  const v = String(raw ?? '').trim();
-  return /^(n\/?a|na|-|—|tbc|unknown)$/i.test(v) ? '' : v;
-}
 
 /* ---------- field parsing ---------- */
 
@@ -71,18 +37,6 @@ function parseAddress(address) {
   const parts = address.split(',').map((p) => p.trim()).filter(Boolean);
   const guess = parts.length >= 2 ? parts[parts.length - 2] : '';
   return { suburb: guess.replace(/\s+VIC\.?\s*\d{4}$/i, '').trim(), postcode: '' };
-}
-
-/**
- * "468 (Standing), 270 (Seated)" → 468, keeping the original around: the number drives
- * sorting and the room-size filter, the full string is what a booker actually needs.
- */
-function parseCapacity(raw) {
-  const text = value(raw);
-  const first = /(\d[\d,]*)/.exec(text);
-  const capacity = first ? Number(first[1].replace(/,/g, '')) : 0;
-  const detail = text && !/^\d[\d,]*$/.test(text) ? text : '';
-  return { capacity, capacityNote: detail };
 }
 
 const TYPE_RULES = [
@@ -122,10 +76,13 @@ async function geocode(rows) {
 
   for (const row of rows) {
     if (row.lat && row.lng) continue;
-    const key = row.address || `${row.name}, ${row.city} VIC`;
+    const key = [row.address || row.name, row.city, row.state, row.country]
+      .filter(Boolean).join(', ');
     if (!(key in cache)) {
+      // No country filter: the database spans nine of them, and pinning the search to AU
+      // would silently fail every overseas room.
       const url = 'https://nominatim.openstreetmap.org/search'
-        + `?format=json&limit=1&countrycodes=au&q=${encodeURIComponent(key)}`;
+        + `?format=json&limit=1&q=${encodeURIComponent(key)}`;
       try {
         const res = await fetch(url, { headers: { 'User-Agent': 'GigBook venue import (one-off)' } });
         const [hit] = res.ok ? await res.json() : [];
@@ -148,12 +105,12 @@ async function geocode(rows) {
 /* ---------- output ---------- */
 function render(rows, { source, genres, types }) {
   const body = rows.map((v) => `  ${JSON.stringify(v)},`).join('\n');
-  return `// The GigBook venue database — real Victorian rooms.
+  return `// The GigBook venue database.
 //
 // GENERATED FILE. Do not hand-edit: re-run the importer and commit the result.
 //   node scripts/import-venues.mjs ${source}
 //
-// ${rows.length} venues${rows.filter((v) => v.lat && v.lng).length ? '' : ' (no coordinates yet — see below)'}.
+// ${rows.length} venues across ${new Set(rows.map((v) => v.country).filter(Boolean)).size} countries${rows.filter((v) => v.lat && v.lng).length ? '' : ' (no coordinates yet — see below)'}.
 // Coordinates: ${rows.filter((v) => v.lat && v.lng).length} of ${rows.length} rows have them. Venues
 // without coordinates are excluded from the map by design rather than plotted at 0,0. Run
 // the importer with --geocode on a machine with network access to fill them in.
@@ -168,9 +125,9 @@ export function slugify(text) {
 
 export function seedVenues() {
   return ROWS.map((row, i) => ({
+    // state and country come from the spreadsheet, per row — the database is not
+    // Australia-only, so they must not be stamped here.
     ...row,
-    state: 'VIC',
-    country: 'Australia',
     contactName: '',
     payType: '',
     status: 'active',
@@ -197,26 +154,37 @@ if (!csvPath) {
 }
 
 const table = parseCsv(fs.readFileSync(csvPath, 'utf8'));
-const header = table[0].map((h) => h.toLowerCase().replace(/[^a-z]/g, ''));
-const col = (...names) => {
-  for (const n of names) {
-    const i = header.indexOf(n);
+const header = table[0].map(normaliseHeader);
+/** First alias present wins, so preference comes from ALIASES rather than column order. */
+const col = (field) => {
+  for (const want of ALIASES[field] || [field]) {
+    const i = header.indexOf(want);
     if (i >= 0) return i;
   }
   return -1;
 };
 
+// Aliases are listed most-preferred first, and `col()` returns the first one present — so
+// preference comes from this list, not from which column sits further left in the sheet.
+// `city` takes Suburb ahead of City deliberately: the sheet's City is the metro ("Melbourne")
+// while the app's city is the locality on every venue card and the key for duplicate
+// matching. Taking City would label two hundred rooms "Melbourne" and merge them.
 const IDX = {
-  name: col('venue', 'venuename', 'name'),
+  name: col('name'),
   address: col('address'),
-  website: col('website', 'url'),
-  phone: col('phone', 'telephone'),
-  email: col('email', 'bookingemail'),
-  genres: col('genres', 'genre'),
+  city: col('city'),
+  metro: col('metro'),
+  state: col('state'),
+  country: col('country'),
+  postcode: col('postcode'),
+  website: col('website'),
+  phone: col('phone'),
+  email: col('contactEmail'),
+  genres: col('genres'),
   capacity: col('capacity'),
-  description: col('description', 'notes'),
-  lat: col('latitude', 'lat'),
-  lng: col('longitude', 'lng', 'long'),
+  description: col('notes'),
+  lat: col('lat'),
+  lng: col('lng'),
 };
 if (IDX.name < 0) throw new Error(`no venue-name column in: ${table[0].join(', ')}`);
 
@@ -229,7 +197,12 @@ for (const line of table.slice(1)) {
   if (!name) continue;
 
   const address = cell(IDX.address);
-  const { suburb, postcode } = parseAddress(address);
+  // Prefer the sheet's own columns; only fall back to picking the address apart when it
+  // doesn't have them. Parsing "…, Brunswick VIC 3056" was always a guess, and it can't
+  // work at all for the non-Australian rows.
+  const parsed = IDX.city >= 0 && IDX.postcode >= 0 ? null : parseAddress(address);
+  const suburb = cell(IDX.city) || cell(IDX.metro) || parsed?.suburb || '';
+  const postcode = cell(IDX.postcode) || parsed?.postcode || '';
   const { capacity, capacityNote } = parseCapacity(IDX.capacity >= 0 ? line[IDX.capacity] : '');
   const email = cell(IDX.email);
 
@@ -242,6 +215,9 @@ for (const line of table.slice(1)) {
     id,
     name,
     city: suburb,
+    metro: cell(IDX.metro),
+    state: cell(IDX.state),
+    country: cell(IDX.country),
     address,
     postcode,
     lat: Number(cell(IDX.lat)) || 0,

@@ -8,6 +8,7 @@ import {
   sampleVenues, removeSampleVenues,
 } from '@/store/store';
 import { VENUE_TYPES, slugify } from '@/data/venues';
+import { FIELDS, guessMapping, parseCsv, parseCapacity } from '@/lib/importMap';
 import AppShell from '@/components/AppShell';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,76 +24,6 @@ import { fmtDate, money, plural, toCsv, download, uid } from '@/lib/format';
 
 const TABS = ['overview', 'venues', 'import', 'submissions', 'users'];
 
-/* ---------- CSV ---------- */
-export function parseCsv(text) {
-  const rows = [];
-  let row = [];
-  let cell = '';
-  let quoted = false;
-
-  for (let i = 0; i < text.length; i += 1) {
-    const c = text[i];
-    if (quoted) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { cell += '"'; i += 1; } else quoted = false;
-      } else cell += c;
-      continue;
-    }
-    if (c === '"') { quoted = true; continue; }
-    if (c === ',') { row.push(cell); cell = ''; continue; }
-    if (c === '\n' || c === '\r') {
-      if (c === '\r' && text[i + 1] === '\n') i += 1;
-      row.push(cell);
-      if (row.some((v) => v.trim() !== '')) rows.push(row);
-      row = [];
-      cell = '';
-      continue;
-    }
-    cell += c;
-  }
-  row.push(cell);
-  if (row.some((v) => v.trim() !== '')) rows.push(row);
-  return rows.map((r) => r.map((v) => v.trim()));
-}
-
-const FIELDS = [
-  ['name', 'Venue name', true],
-  ['city', 'Suburb', true],
-  ['capacity', 'Capacity'],
-  ['type', 'Venue type'],
-  ['genres', 'Genres'],
-  ['contactName', 'Booking contact'],
-  ['contactEmail', 'Booking email'],
-  ['website', 'Website'],
-  ['lat', 'Latitude'],
-  ['lng', 'Longitude'],
-  ['payType', 'Pay structure'],
-  ['submissionMethod', 'Submission method'],
-  ['notes', 'Booking notes'],
-];
-
-const ALIASES = {
-  name: ['venue', 'venuename', 'name'],
-  city: ['suburb', 'city', 'town', 'location'],
-  capacity: ['capacity', 'cap', 'size'],
-  type: ['type', 'venuetype', 'category'],
-  genres: ['genres', 'genre', 'styles'],
-  contactName: ['contact', 'contactname', 'booker', 'bookingcontact'],
-  contactEmail: ['email', 'contactemail', 'bookingemail'],
-  website: ['website', 'url', 'site'],
-  lat: ['lat', 'latitude'],
-  lng: ['lng', 'lon', 'long', 'longitude'],
-  payType: ['pay', 'paytype', 'deal', 'payment'],
-  submissionMethod: ['submission', 'submissionmethod', 'submitvia', 'method'],
-  notes: ['notes', 'note', 'comments'],
-};
-
-function guessColumn(headers, field) {
-  const norm = (t) => t.toLowerCase().replace(/[^a-z]/g, '');
-  const wants = ALIASES[field] || [field.toLowerCase()];
-  return headers.findIndex((h) => wants.includes(norm(h)));
-}
-
 /* ---------- Venue editor ---------- */
 function VenueDialog({ venue, open, onOpenChange }) {
   if (!open) return null;
@@ -107,8 +38,10 @@ function VenueDialog({ venue, open, onOpenChange }) {
       id: v.id || `ven_${slugify(String(d.name))}_${uid('x').slice(-4)}`,
       name: String(d.name).trim(),
       city: String(d.city).trim(),
-      state: 'VIC',
-      country: 'Australia',
+      // Editable, not assumed — the database spans nine countries.
+      state: String(d.state || '').trim(),
+      country: String(d.country || '').trim(),
+      address: String(d.address || '').trim(),
       capacity: Number(d.capacity) || 0,
       type: String(d.type),
       contactName: String(d.contactName || '').trim(),
@@ -137,8 +70,10 @@ function VenueDialog({ venue, open, onOpenChange }) {
             <Label htmlFor="v-name">Venue name</Label>
             <Input id="v-name" name="name" defaultValue={v.name} required />
           </div>
-          {[['city', 'Suburb'], ['capacity', 'Capacity'], ['contactName', 'Booking contact'], ['contactEmail', 'Booking email'],
-            ['website', 'Website'], ['payType', 'Pay structure'], ['lat', 'Latitude'], ['lng', 'Longitude']].map(([k, label]) => (
+          {[['city', 'Suburb / locality'], ['state', 'State / region'], ['country', 'Country'],
+            ['address', 'Address'], ['capacity', 'Capacity'], ['contactName', 'Booking contact'],
+            ['contactEmail', 'Booking email'], ['website', 'Website'], ['payType', 'Pay structure'],
+            ['lat', 'Latitude'], ['lng', 'Longitude']].map(([k, label]) => (
             <div key={k} className="space-y-1.5">
               <Label htmlFor={`v-${k}`}>{label}</Label>
               <Input id={`v-${k}`} name={k} defaultValue={v[k]} type={['capacity', 'lat', 'lng'].includes(k) ? 'number' : 'text'} step="any" />
@@ -345,28 +280,43 @@ function ImportTab() {
   function begin(csv, filename) {
     const rows = parseCsv(csv);
     if (rows.length < 2) { toast.error('That CSV has no data rows'); return; }
-    const headers = rows[0];
-    const mapping = {};
-    FIELDS.forEach(([key]) => { mapping[key] = guessColumn(headers, key); });
-    setPending({ rows, mapping, filename });
+    setPending({ rows, mapping: guessMapping(rows[0]), filename });
   }
 
   function run() {
     const { rows, mapping } = pending;
-    if (mapping.name < 0 || mapping.city < 0) { toast.error('Map at least the venue name and suburb columns'); return; }
+    if (mapping.name < 0 || (mapping.city < 0 && mapping.metro < 0)) {
+      toast.error('Map at least the venue name and a suburb or city column');
+      return;
+    }
     const get = (row, key) => (mapping[key] >= 0 ? (row[mapping[key]] || '').trim() : '');
     let added = 0; let updated = 0; let skipped = 0;
 
     rows.slice(1).forEach((row) => {
       const name = get(row, 'name');
-      const city = get(row, 'city');
+      // Not every room has a suburb — an international listing often only has a city — so
+      // fall back rather than dropping the row.
+      const city = get(row, 'city') || get(row, 'metro');
       if (!name || !city) { skipped += 1; return; }
       const existing = state.venues.find((v) => v.name.toLowerCase() === name.toLowerCase() && v.city.toLowerCase() === city.toLowerCase());
       const genresRaw = get(row, 'genres');
+      const capacityRaw = get(row, 'capacity');
       const record = {
-        name, city, state: 'VIC', country: 'Australia',
-        capacity: Number(get(row, 'capacity')) || existing?.capacity || 0,
-        type: get(row, 'type') || existing?.type || 'Pub',
+        name,
+        city,
+        // Taken from the sheet, never assumed: the database covers nine countries now, and
+        // stamping every row VIC/Australia was silently wrong for a third of it.
+        state: get(row, 'state') || existing?.state || '',
+        country: get(row, 'country') || existing?.country || '',
+        address: get(row, 'address') || existing?.address || '',
+        metro: get(row, 'metro') || existing?.metro || '',
+        postcode: get(row, 'postcode') || existing?.postcode || '',
+        phone: get(row, 'phone') || existing?.phone || '',
+        // "468 (Standing), 270 (Seated)" → 468 for sorting and the size filter, with the
+        // full string kept for the detail pane.
+        capacity: parseCapacity(capacityRaw).capacity || existing?.capacity || 0,
+        capacityNote: parseCapacity(capacityRaw).capacityNote || existing?.capacityNote || '',
+        type: get(row, 'type') || existing?.type || 'Venue',
         genres: genresRaw ? genresRaw.split(/[;,]/).map((g) => g.trim()).filter(Boolean) : existing?.genres || [],
         contactName: get(row, 'contactName') || existing?.contactName || '',
         contactEmail: get(row, 'contactEmail') || existing?.contactEmail || '',
@@ -411,7 +361,7 @@ function ImportTab() {
           <div className="mt-5 space-y-1.5">
             <Label htmlFor="csv-paste">…or paste CSV</Label>
             <Textarea id="csv-paste" rows={6} value={text} onChange={(e) => setText(e.target.value)}
-              placeholder="Venue,Suburb,Capacity,Booking Email&#10;The Rusted Anchor,Fitzroy,220,bookings@example.com" />
+              placeholder="Name,Address,Suburb,City,State/Region,Country,Postcode,Website,Phone,Email,Genres,Capacity,Description" />
             <Button className="mt-2" onClick={() => (text.trim() ? begin(text, 'pasted data') : toast.error('Paste some CSV first'))} data-parse-paste>
               Read CSV
             </Button>

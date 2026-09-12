@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Stamp } from '@/components/Stamp';
 
 const SELLING_POINTS = [
-  { icon: MapPin, title: 'Every room, one list', body: 'Melbourne venues with real booking contacts, capacities and submission rules.' },
+  { icon: MapPin, title: 'Every room, one list', body: 'Real booking contacts, capacities and submission rules — Melbourne out to Tokyo and London.' },
   { icon: Send, title: 'The pitch writes itself', body: 'Your EPK bio becomes the email body, so every approach reads the same.' },
   { icon: Phone, title: 'Know who owes you', body: 'Emailed, opened, replied, booked — stamped across your whole list.' },
 ];
@@ -74,7 +74,7 @@ export default function Landing() {
             <span className="font-display text-xl tracking-[0.08em] text-bone">GigBook</span>
           </div>
 
-          <p className="eyebrow mb-3 text-flash-red">Melbourne · {venueCount} rooms</p>
+          <p className="eyebrow mb-3 text-flash-red">{venueCount} rooms</p>
           <h1 className="max-w-2xl text-[clamp(2.6rem,7vw,4.75rem)] leading-[0.92] text-bone">
             Find the room.
             <br />

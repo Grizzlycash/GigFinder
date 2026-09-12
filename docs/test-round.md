@@ -6,7 +6,12 @@ the awkward bits.
 ## Before you send the link
 
 1. **Check the venue data.** `src/data/venues.js` is generated from the spreadsheet by
-   `scripts/import-venues.mjs` — don't hand-edit it. To reload after the spreadsheet changes:
+   `scripts/import-venues.mjs` — don't hand-edit it. The master sheet's columns are
+   `Name, Address, Street, Suburb, City, State/Region, Country, Postcode, Website, Phone,
+   Email, Genres, Capacity, Description`; both importers recognise those plus common aliases.
+   Export it as CSV first — neither importer reads `.xlsx`.
+
+   To reload after the spreadsheet changes:
 
    ```bash
    node scripts/import-venues.mjs path/to/GigBook_Database.csv --geocode

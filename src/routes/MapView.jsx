@@ -59,7 +59,7 @@ export default function MapView() {
     return true;
   });
 
-  // Melbourne's inner suburbs sit on top of each other at low zoom, so nearby rooms
+  // Dense inner suburbs sit on top of each other at low zoom, so nearby rooms
   // collapse into one cluster marker that splits apart as you zoom in. Without this the
   // front pin simply covers the ones behind it and they can never be clicked.
   const clusters = useMemo(() => {

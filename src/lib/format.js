@@ -4,7 +4,7 @@ export function uid(prefix = 'id') {
 
 const AUD = new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' });
 
-/** Prices are in Australian dollars — this is a Melbourne product. */
+/** Prices are in Australian dollars — the business is Australian, wherever the rooms are. */
 export function money(n) {
   return AUD.format(Number(n));
 }

@@ -342,7 +342,9 @@ export function addVenue(data, visibility = 'private') {
   const shared = visibility === 'shared';
   const venue = {
     id: uid('ven'),
-    name: '', city: '', state: 'VIC', country: 'Australia',
+    // No VIC/Australia default: the database spans nine countries, so an unstated
+    // state is left unstated rather than guessed.
+    name: '', city: '', state: '', country: '',
     lat: 0, lng: 0, capacity: 0, type: 'Pub', genres: [],
     contactName: '', contactEmail: '', phone: '', website: '',
     submissionMethod: 'Email', payType: '', notes: '',

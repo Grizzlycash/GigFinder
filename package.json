@@ -2,6 +2,7 @@
   "name": "gigbook",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "GigBook — venue discovery, booking emails and outreach tracking for gigging musicians.",
   "scripts": {
     "dev": "vite",

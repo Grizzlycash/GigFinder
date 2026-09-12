@@ -1,7 +1,7 @@
 # GigBook
 
 Venue discovery, booking emails and outreach tracking for gigging musicians — built around a
-database of Melbourne live music rooms.
+database of live music rooms, from Melbourne out to Tokyo and London.
 
 **Picking this up after a break?** `docs/handover.md` has the current state, the decisions
 already made, and the open questions.
@@ -15,7 +15,7 @@ npm test         # builds, then drives the whole app in Chromium
 ```
 
 React + Vite + Tailwind v4 + shadcn/ui. `npm test` builds the production bundle, serves it,
-and walks 37 steps — signup through onboarding, venue filtering, map pins, both tier states
+and walks 38 steps — signup through onboarding, venue filtering, map pins, both tier states
 of the EPK generator, a press kit edited and downloaded as a real PDF, a send, the tracker,
 the venue submission round trip, the admin CSV import — failing on any console
 or page error. It also asserts there's a visible keyboard focus ring and no horizontal
@@ -97,8 +97,9 @@ src/
     ui/              shadcn/ui components (Radix + CVA)
   routes/            one file per screen
   store/store.js     all state, persistence and plan limits
-  data/venues.js     Melbourne seed database
+  data/venues.js     the venue database (generated — see scripts/import-venues.mjs)
   lib/               cn(), formatting helpers
+    importMap.js     spreadsheet column → venue field mapping (shared by both importers)
     epkDocument.js   the press kit as an editable document model
     epkPdf.js        that document rendered to a real PDF
 test/smoke.mjs       end-to-end browser suite
@@ -240,14 +241,19 @@ State is in `localStorage` under `gigbook:v1` — nothing leaves the browser. `s
 the only module that touches persistence, so swapping it for API calls is the single change
 needed to move to a real backend.
 
-**The venue database is real.** `src/data/venues.js` holds 222 Victorian rooms and is
-**generated** from the spreadsheet — don't hand-edit it:
+**The venue database is real.** `src/data/venues.js` holds 559 rooms across nine countries
+and is **generated** from the spreadsheet — don't hand-edit it:
 
 ```bash
 node scripts/import-venues.mjs path/to/GigBook_Database.csv --geocode
 ```
 
-The importer parses suburb and postcode out of the address, takes the first number in
+The importer reads the sheet's own `Suburb`, `City`, `State/Region`, `Country` and `Postcode`
+columns, only falling back to picking the address apart when they're absent. **`city` takes
+Suburb, not City** — City is the metro ("Melbourne", "Tokyo") and lands on `metro`, while
+`city` is the locality shown on every venue card and the key for duplicate matching; mapping
+it to City would label two hundred rooms "Melbourne" and merge them into each other. It takes
+the first number in
 messy capacity strings (`"468 (Standing), 270 (Seated)"`) while keeping the full text,
 infers a venue type from the name and blurb, and limits the genre filter to tags carried by
 three or more rooms — venues keep every tag, but a genre one venue claims is a label, not a
