@@ -25,10 +25,11 @@ the fourth is a build job.
    Duplicates are merged automatically now, but the importer prints every field the
    duplicate rows disagreed on — worth reading that list and settling it in the sheet.
 
-   It also flags **6 rows with an Australian address but a non-Australian Country** (Pirates
-   Tavern, Customs House Hotel, Royal Yacht Club of Victoria, The Gem, The Hamilton Station
-   Hotel, Transit Bar) and **73 rows repeating one value across Suburb, City and
-   State/Region**. Both are source-sheet errors, imported as-is rather than guessed at.
+   The 6 rows with an Australian address but a non-Australian Country (Pirates Tavern,
+   Customs House Hotel, Royal Yacht Club of Victoria, The Gem, The Hamilton Station Hotel,
+   Transit Bar) are now fixed in the sheet and the database. **73 rows still repeat one
+   value across Suburb, City and State/Region** — harmless to import, wrong on screen —
+   and are imported as-is rather than guessed at.
 
 3. **Stand up Cloudflare Pages + Access** — the full runbook is `docs/hosting.md`. The slow
    step is the nameserver change at the registrar; start it early. Don't forget
